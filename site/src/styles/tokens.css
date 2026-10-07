@@ -1,0 +1,22 @@
+/* Locked design tokens (from mockup A: particle heart, crimson, Space Grotesk + Inter). */
+:root {
+  color-scheme: dark;
+  --bg: #07080b;
+  --surface: #0e1016;
+  --surface-2: #151821;
+  --ink: #ecebe8;
+  --ink-2: #a9acb4;
+  --ink-3: #6f737c;
+  --line: rgba(255, 255, 255, 0.09);
+
+  /* data roles, validated with the dataviz palette checker on #0b0c10 */
+  --accent: #e5383b;   /* Yes / heart disease */
+  --no: #3f7fd1;       /* No */
+  --missed: #c98500;   /* sick people a model missed: always labeled */
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: clamp(16px, 5vw, 72px);
+  --col: min(36rem, 42vw);
+}
