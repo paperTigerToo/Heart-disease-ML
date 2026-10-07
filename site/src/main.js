@@ -1,6 +1,7 @@
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/sections.css";
+import "./styles/charts.css";
 import * as d3 from "d3";
 import { loadData, bindAll, get } from "./data.js";
 import { initStory, initReveals, initDrag, reducedMotion } from "./scroll/story.js";
@@ -9,11 +10,31 @@ import { createHeart } from "./three/heart.js";
 import { createLabels } from "./three/labels.js";
 import { accuracyChart } from "./charts/accuracy.js";
 import { classSplitChart } from "./charts/classSplit.js";
+import { featuresChart, ratesChart, encodingChart } from "./charts/dataCharts.js";
+import { accuracyFeaturesChart, missedChart, probabilitiesChart } from "./charts/twistCharts.js";
+import { smoteChart, balanceCompareChart } from "./charts/balanceCharts.js";
+import { thresholdChart } from "./charts/threshold.js";
+import { leaderboardChart, tradeoffChart, curvesChart, importanceChart } from "./charts/resultsCharts.js";
 
+// data-chart name in index.html -> chart factory (el, ctx) => { enter() }
 const CHARTS = {
+  features: featuresChart,
+  rates: ratesChart,
+  encoding: encodingChart,
   "accuracy-first": (el, ctx) => accuracyChart(el, ctx),
-  "accuracy-baseline": (el, ctx) => accuracyChart(el, ctx, { baseline: true }),
+  "accuracy-vs-features": accuracyFeaturesChart,
   "class-split": classSplitChart,
+  "accuracy-baseline": (el, ctx) => accuracyChart(el, ctx, { baseline: true }),
+  missed: missedChart,
+  probabilities: probabilitiesChart,
+  smote: (el, ctx) => smoteChart(el, ctx, { mode: "smote" }),
+  "smote-enn": (el, ctx) => smoteChart(el, ctx, { mode: "enn" }),
+  "balance-compare": balanceCompareChart,
+  threshold: thresholdChart,
+  leaderboard: leaderboardChart,
+  tradeoff: tradeoffChart,
+  curves: curvesChart,
+  importance: importanceChart,
 };
 
 async function main() {
@@ -25,7 +46,12 @@ async function main() {
   const charts = new Map();
   document.querySelectorAll(".chart-card[data-chart]").forEach((el) => {
     const make = CHARTS[el.dataset.chart];
-    if (make) charts.set(el, make(el, ctx));
+    if (!make) return console.warn("no chart registered for", el.dataset.chart);
+    try {
+      charts.set(el, make(el, ctx));
+    } catch (err) {
+      console.error(`chart "${el.dataset.chart}" failed`, err);
+    }
   });
 
   const story = initStory();

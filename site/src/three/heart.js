@@ -84,7 +84,7 @@ export function createHeart(stage, ctx) {
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         float real = 1.0 - synth;
-        float boost = 1.0 + uYesBoost * yes * real * 1.3;
+        float boost = 1.0 + uYesBoost * yes * real * 0.6;
         gl_PointSize = uSize * uPixelRatio / -mv.z * mix(uSizeK.x, uSizeK.y, m) * boost * sqrt(uScale);
 
         // color: everyone is "the heart" until the reveal sorts them into Yes / No

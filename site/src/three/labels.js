@@ -11,6 +11,7 @@ export function createLabels(stage, heart, ctx) {
   const root = document.getElementById("dot-labels");
   const a = heart.built.anchors;
   const per = isMobile() ? 40 : 10;
+  const short = isMobile(); // narrow matrix: abbreviate quadrant labels
   const best = ctx.m["logreg-smoteenn"].cm, naive = ctx.m["logreg-22"].metrics;
   const sw = (cls, ring) => `<span class="swatch${ring ? " ring" : ""}" style="background:var(--${cls})"></span>`;
   const weight = (s, f) => (s.from === f ? 1 - s.mix : 0) + (s.to === f ? s.mix : 0);
@@ -27,10 +28,10 @@ export function createLabels(stage, heart, ctx) {
     { f: F.BALANCED, at: () => a.balanced.no, html: `${sw("no")}No · ${int(heart.built.nReal - Math.round(ctx.d.classes.Yes / per))} dots` },
     { f: F.BALANCED, at: () => a.balanced.yes,
       html: `${sw("accent")}Yes · ${int(Math.round(ctx.d.classes.Yes / per))} real<small>${sw("accent", true)}+ ${int(heart.built.nSynth)} synthetic (SMOTE)</small>` },
-    { f: F.CONFUSION, at: () => a.confusion.tp, html: `${sw("accent")}Sick, flagged · TP<small>${int(best.tp)} test patients</small>` },
-    { f: F.CONFUSION, at: () => a.confusion.fn, html: `${sw("missed")}Sick, missed · FN<small>${int(best.fn)}</small>` },
-    { f: F.CONFUSION, at: () => a.confusion.fp, below: true, html: `${sw("no")}Healthy, flagged · FP<small>${int(best.fp)}</small>` },
-    { f: F.CONFUSION, at: () => a.confusion.tn, below: true, html: `${sw("no")}Healthy, cleared · TN<small>${int(best.tn)}</small>` },
+    { f: F.CONFUSION, at: () => a.confusion.tp, html: short ? `${sw("accent")}TP<small>${int(best.tp)}</small>` : `${sw("accent")}Sick, flagged · TP<small>${int(best.tp)} test patients</small>` },
+    { f: F.CONFUSION, at: () => a.confusion.fn, html: short ? `${sw("missed")}FN<small>${int(best.fn)}</small>` : `${sw("missed")}Sick, missed · FN<small>${int(best.fn)}</small>` },
+    { f: F.CONFUSION, at: () => a.confusion.fp, below: true, html: short ? `${sw("no")}FP<small>${int(best.fp)}</small>` : `${sw("no")}Healthy, flagged · FP<small>${int(best.fp)}</small>` },
+    { f: F.CONFUSION, at: () => a.confusion.tn, below: true, html: short ? `${sw("no")}TN<small>${int(best.tn)}</small>` : `${sw("no")}Healthy, cleared · TN<small>${int(best.tn)}</small>` },
   ].map((def) => {
     const el = document.createElement("div");
     el.className = `dot-label${def.below ? " below" : ""}`;
@@ -47,7 +48,9 @@ export function createLabels(stage, heart, ctx) {
         d.el.classList.toggle("on", on);
         if (!on) continue;
         heart.toWorld(...d.at(), v).project(stage.camera);
-        d.el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`;
+        // keep labels on screen: shift left when they would run past the right edge
+        const left = (v.x * 0.5 + 0.5) * innerWidth;
+        d.el.style.left = `${Math.max(8, Math.min(left, innerWidth - d.el.offsetWidth - 12))}px`;
         d.el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
       }
     },

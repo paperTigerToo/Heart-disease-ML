@@ -36,7 +36,7 @@ const RAW = {
   "score-recall": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, LOW, LOW] },
   "score-f1": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, 1, LOW] },
   "score-auc": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1 },
-  "score-threshold": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1 },
+  "score-threshold": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, dim: 0.3 }, // the explorer is a different model: let it lead
   "results-leaderboard": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-tradeoff": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-curves": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.9 },

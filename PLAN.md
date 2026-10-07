@@ -173,12 +173,12 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 - [x] `three/`: the scene, the chosen heart, its state in each chapter (dot formations if it's the particle heart), and the phone and no-3D fallbacks.
 
 **Phase 4: Charts** (one module per chart, each with `init(el, data)` and `step(n)`)
-- [ ] Chapter 2: feature cards, rate-by-category charts, the encoding animation.
-- [ ] Chapter 3: accuracy counters and the accuracy-vs-features line.
-- [ ] Chapter 4: class waffle, baseline line, one-dot-per-person confusion matrix, probability histogram.
-- [ ] Chapter 5: SMOTE/ENN scatter and before/after class bars.
-- [ ] Chapter 6: metric formula cards and the threshold slider.
-- [ ] Chapter 7: sortable leaderboard, slope chart, ROC/PR curves, importance before vs. after.
+- [x] Chapter 2: feature cards, rate-by-category charts, the encoding animation.
+- [x] Chapter 3: accuracy counters and the accuracy-vs-features line.
+- [x] Chapter 4: class waffle, baseline line, one-dot-per-person confusion matrix, probability histogram.
+- [x] Chapter 5: SMOTE/ENN scatter and before/after class bars.
+- [x] Chapter 6: metric formula cards and the threshold slider.
+- [x] Chapter 7: sortable leaderboard, slope chart, ROC/PR curves, importance before vs. after.
 
 **Phase 5: Polish**
 - [ ] Text reveals, chapter transitions, and a loading screen that preloads the data and 3D model.

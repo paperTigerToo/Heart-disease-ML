@@ -1,0 +1,71 @@
+:root {
+  /* curve-chart series (validated all-pairs on the dark surface; crimson/blue stay reserved for Yes/No) */
+  --series-1: #d95926;
+  --series-2: #199e70;
+  --series-3: #9085e9;
+}
+
+/* legends */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 10px; font-size: 12px; color: var(--ink-2); }
+.legend .key { display: inline-flex; align-items: center; gap: 6px; }
+.mark { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.mark.ring { background: transparent; border: 2px solid var(--c); }
+.mark.line { width: 16px; height: 2px; border-radius: 1px; }
+.mark.dash { width: 16px; height: 0; border-radius: 0; background: none; border-top: 2px dashed var(--c); }
+.mark.square { border-radius: 3px; }
+
+/* data-table toggle */
+.data-table { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
+.data-table summary { cursor: pointer; width: fit-content; }
+.data-table summary:hover { color: var(--ink-2); }
+.data-table table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.data-table th, .data-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+.data-table th { color: var(--ink); font-weight: 600; }
+
+/* feature cards */
+.feature-groups { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.fgroup h5 { margin: 0 0 6px; font: 600 12px/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.fgroup ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fgroup li {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  opacity: 0; transform: translateY(10px); transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out), border-color 0.2s;
+  transition-delay: calc(var(--i) * 40ms);
+}
+.in .fgroup li { opacity: 1; transform: none; }
+.fgroup li:hover, .fgroup li:focus { border-color: var(--ink-3); outline: none; }
+.fgroup li b { display: block; font-size: 13px; color: var(--ink); }
+.fgroup li small { display: block; font-size: 11.5px; line-height: 1.35; color: var(--ink-3); }
+
+/* raw → encoded row */
+.encode { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.encode th { text-align: left; font-weight: 600; color: var(--ink-3); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 6px 6px; }
+.encode td { padding: 3px 6px; border-top: 1px solid var(--line); color: var(--ink-2); }
+.encode td.q { color: var(--ink); }
+.encode td.enc { color: var(--ink); font-weight: 600; opacity: 0; transition: opacity 0.4s; transition-delay: calc(var(--i) * 70ms); }
+.encode td.enc.target { color: var(--accent); }
+.in .encode td.enc { opacity: 1; }
+.encode td.arrow { color: var(--ink-3); width: 1.2em; }
+.encode .bits { letter-spacing: 0.35em; }
+
+/* threshold explorer */
+.thresh-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.thresh-controls label { font-size: 13px; color: var(--ink-2); }
+.thresh-controls output { font: 600 22px/1 var(--font-display); color: var(--ink); min-width: 3.2ch; display: inline-block; }
+.thresh-controls input[type="range"] { flex: 1 1 200px; accent-color: var(--accent); min-height: 24px; }
+.chip {
+  font: 500 12px var(--font-body); color: var(--ink-2); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px;
+}
+.chip:hover, .chip[aria-pressed="true"] { border-color: var(--ink-2); color: var(--ink); }
+.chip:focus-visible, .thresh-controls input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cm { display: grid; grid-template-columns: auto 1fr 1fr; gap: 4px; font-size: 12px; margin-bottom: 14px; }
+.cm .h { color: var(--ink-3); padding: 2px 6px; align-self: end; }
+.cm .rh { color: var(--ink-3); padding: 0 8px 0 0; align-self: center; text-align: right; }
+.cm .cell { padding: 10px 10px 8px; border-radius: 10px; background: var(--surface); border-left: 3px solid var(--c); }
+.cm .cell b { display: block; font: 600 20px/1.1 var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.cm .cell span { color: var(--ink-3); }
+
+/* sort buttons */
+.sorter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+.chart-note { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
