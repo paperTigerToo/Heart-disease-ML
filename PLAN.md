@@ -35,8 +35,8 @@ The design centers on a **Three.js heart that moves and changes as you scroll**,
 ```
 heartDiseaseML/
 ├─ HeartDiseaseML.py, heart_2020_cleaned.csv   originals (the CSV is never sent to the browser)
-├─ analysis/requirements.txt, export_results.py
-├─ mockups/shared.css, a-particles.html, b-anatomical.html, c-glass.html
+├─ analysis/requirements.txt, export_results.py, export_explainers.py
+├─ (mockups/ removed once the designs were picked; they're in git history before this change)
 ├─ site/                       Vite app
 │  ├─ index.html               all chapter copy and markup
 │  ├─ public/data/*.json       written by the export script
@@ -115,7 +115,7 @@ The heart column describes the particle concept. With the anatomical or glass he
   - **No 3D support:** a static image of the heart replaces it, and everything else still works.
   - **Phones:** about 8k dots, a capped pixel density, and charts stacked under the text.
 
-## Mockups (built while the export runs)
+## Mockups (built while the export runs; removed after the picks)
 There are three single-file pages in `mockups/`, sharing one dark-cinematic style sheet so **the heart is the only big difference**. Each plays the same three scenes: the hero, then the topic (the heart moves aside as text appears), then the twist (91.4 / 8.6, with one D3 chart using the real counts).
 
 | Mockup | Heart |
@@ -143,6 +143,10 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 - [ ] Why you chose this project, the CS-375 context, and any teammates to credit.
 - [ ] Your takeaways and what you'd do next.
 - [ ] Bio, an optional headshot, and links: GitHub, LinkedIn, resume, and the Colab notebook if you want it public.
+
+**Model animations** (requested 2026-10-10: go deeper on how each model works)
+- [x] Pick from 14 animation mockups. **Picked 2026-10-11: K3 (3D sphere of neighbors), T2 (falling through a real tree), L1 (weighing the evidence), A1 (mistakes get heavier), N1 (signal flow).**
+- [ ] Rewrite the "Inside the models" card copy in your own voice.
 
 **Review and ship**
 - [ ] Check that each chart says what you'd say about it in an interview.
@@ -181,11 +185,18 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 - [x] Chapter 7: sortable leaderboard, slope chart, ROC/PR curves, importance before vs. after.
 
 **Phase 5: Polish**
-- [ ] Text reveals, chapter transitions, and a loading screen that preloads the data and 3D model.
-- [ ] Responsive pass (375 px phones up to wide screens).
-- [ ] Accessibility pass: screen-reader labels, data-table versions of charts, contrast, keyboard control for the slider and sorting.
-- [ ] Performance pass: smooth 60 fps scrolling and good Lighthouse scores.
+- [x] Text reveals, chapter transitions, and a loading screen that preloads the data and 3D model.
+- [x] Responsive pass (375 px phones up to wide screens).
+- [x] Accessibility pass: screen-reader labels, data-table versions of charts, contrast, keyboard control for the slider and sorting.
+- [ ] Performance pass: smooth 60 fps scrolling and good Lighthouse scores. *(Bundle split into cached chunks; Lighthouse not run yet.)*
 - [ ] *Optional extras:* permutation importance (the default importance favors continuous features like BMI), a fairness check of recall by sex, race and age, and HistGradientBoosting.
+
+**Phase 5b: Model explainer animations** (mockups first, then rebuild)
+- [x] `analysis/export_explainers.py` → `site/public/data/explainers.json` (133 KB: the 3D sample with SMOTEENN rows, a real depth-3 tree, logistic-regression and MLP weights, three example patients).
+- [x] 14 mockup concepts built; the user picked 5.
+- [x] Chapter 07 "Inside the models" in `site/index.html`, one scroll-driven explainer per model in `site/src/explainers/` (own chunk, ~14 KB gzipped, loaded after the charts): logistic regression, decision tree / forest, KNN in 3D, AdaBoost, neural net. Chapters renumbered to 10.
+- [x] Removed the mockups, the unused export pieces (decision maps, age × health sample) and dead CSS/exports.
+- [x] Fixed the grey 3D background (scene.background instead of setClearColor).
 
 **Phase 6: Ship**
 - [ ] A GitHub Actions workflow for Pages (with Vite's `base` set to the repo name).
@@ -194,7 +205,7 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 
 ## Verification
 - **Export:** all checks pass, a few models are spot-checked against your Colab numbers, and `site/public/data` stays under 500 KB.
-- **Mockups and site in the browser pane:**
+- **Site in the browser pane:**
   - Scroll top to bottom and back up with no console errors.
   - Check the phone layout at 375×812, the reduced-motion version, and the no-3D fallback.
 - **Production build:** run `npm run build` then `npm run preview`. Lighthouse targets: performance 80+ on desktop, accessibility 95+.

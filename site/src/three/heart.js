@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { buildFormations, F } from "./formations.js";
 import { isMobile } from "./stage.js";
+import { reducedMotion } from "../scroll/story.js";
 
 const ALPHA = [0.26, 0.42, 0.48, 0.34, 0.5];   // per formation: dense heart glows, grids stay readable
 const SIZE = [1.0, 0.9, 0.9, 0.75, 0.9];
@@ -33,7 +34,7 @@ export function createHeart(stage, ctx) {
   geo.setAttribute("aMeta", new THREE.BufferAttribute(built.meta, 4));
 
   const u = {
-    uTime: { value: 0 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 },
+    uTime: { value: 0 }, uMotion: { value: reducedMotion ? 0 : 1 }, uFrom: { value: 0 }, uTo: { value: 0 }, uMix: { value: 0 },
     uOffset: { value: new THREE.Vector3() }, uScale: { value: 1 }, uRotY: { value: 0 },
     uBeat: { value: 0 }, uLoosen: { value: 0 }, uReveal: { value: 0 },
     uMissedNaive: { value: 0 }, uMissedBest: { value: 0 }, uSynth: { value: 0 },
@@ -49,7 +50,7 @@ export function createHeart(stage, ctx) {
   const material = new THREE.ShaderMaterial({
     uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */`
-      uniform float uTime, uFrom, uTo, uMix, uScale, uRotY, uBeat, uLoosen, uReveal;
+      uniform float uTime, uMotion, uFrom, uTo, uMix, uScale, uRotY, uBeat, uLoosen, uReveal;
       uniform float uMissedNaive, uMissedBest, uSynth, uUnder, uKeep, uYesBoost, uQuadOn, uDim;
       uniform float uRecNaive, uRecBest, uFprBest, uSize, uPixelRatio;
       uniform vec2 uAlpha, uSizeK;
@@ -69,8 +70,9 @@ export function createHeart(stage, ctx) {
       }
       vec3 animate(float k, vec3 p, float rnd) {
         vec3 drift = vec3(sin(uTime * 0.6 + rnd * 40.0), cos(uTime * 0.5 + rnd * 31.0), sin(uTime * 0.7 + rnd * 17.0));
+        drift *= uMotion;
         if (k < 0.5) return rotY(p * (1.0 + uBeat * 0.045), uRotY) + drift * (0.01 + uLoosen * 0.3 * rnd);
-        if (k < 1.5) return rotY(p, uTime * 0.05) + drift * 0.03;
+        if (k < 1.5) return rotY(p, uTime * 0.05 * uMotion) + drift * 0.03;
         return p;
       }
       void main() {
@@ -79,7 +81,7 @@ export function createHeart(stage, ctx) {
         vec3 a = animate(uFrom, formation(uFrom), rnd);
         vec3 b = animate(uTo, formation(uTo), rnd);
         float travelling = step(0.5, abs(uTo - uFrom)) * sin(m * 3.14159);
-        vec3 swirl = vec3(sin(rnd * 6.283 + uTime), cos(rnd * 9.0), sin(rnd * 12.0)) * 0.7 * travelling;
+        vec3 swirl = vec3(sin(rnd * 6.283 + uTime), cos(rnd * 9.0), sin(rnd * 12.0)) * 0.7 * travelling * uMotion;
         vec3 p = mix(a, b, m) * uScale + uOffset + swirl * uScale;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
@@ -151,8 +153,8 @@ export function createHeart(stage, ctx) {
       u.uOffset.value.set(x, layout.cy + state.oy, 0);
       u.uScale.value = state.s * layout.fit;
       const heartWeight = (state.from === F.HEART ? 1 - state.mix : 0) + (state.to === F.HEART ? state.mix : 0);
-      u.uBeat.value = lubDub(t) * state.beat * Math.min(1, heartWeight);
-      u.uRotY.value = t * 0.22 + drag;
+      u.uBeat.value = reducedMotion ? 0 : lubDub(t) * state.beat * Math.min(1, heartWeight);
+      u.uRotY.value = (reducedMotion ? 0.35 : t * 0.22) + drag;
       for (const k of ["loosen", "reveal", "missedNaive", "missedBest", "synth", "under", "yesBoost", "quadOn", "dim"]) {
         u[`u${k[0].toUpperCase()}${k.slice(1)}`].value = state[k];
       }

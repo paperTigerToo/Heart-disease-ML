@@ -14,9 +14,11 @@ export function createStage(canvas) {
   } catch {
     return null;
   }
-  renderer.setClearColor(0x07080b, 1);
   renderer.toneMapping = THREE.NoToneMapping; // keep data colors true to the chart palette
   const scene = new THREE.Scene();
+  // a scene background, not setClearColor: the composer clears its linear render target with
+  // the clear color already converted to sRGB, which renders #07080b as a washed-out grey
+  scene.background = new THREE.Color(0x07080b);
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera.position.set(0, 0, 8);
   const composer = new EffectComposer(renderer);

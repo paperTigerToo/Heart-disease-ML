@@ -2,15 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "mockups",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5500", "--directory", "."],
-      "port": 5500
-    },
-    {
       "name": "site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "site"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "site"
+      ],
       "port": 5173
     }
   ]

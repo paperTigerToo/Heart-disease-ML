@@ -1,0 +1,99 @@
+/* "Inside the models": full-bleed sticky stages with step cards scrolling over them. */
+:root { --xp-card: min(27rem, 34vw); --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+.xp { position: relative; }
+.xp-head { padding: 22svh var(--gutter) 8svh; max-width: 48rem; }
+.xp-kicker { font: 500 12px var(--font-mono); color: var(--accent); letter-spacing: 0.06em; margin: 0 0 0.9rem; }
+.xp-head h3 { font-size: clamp(1.8rem, 3.4vw, 3rem); letter-spacing: -0.035em; line-height: 1; margin: 0; }
+.xp-head p { margin: 1rem 0 0; max-width: 40rem; }
+
+.xp-scrolly { position: relative; }
+.xp-stage {
+  position: sticky; top: 0; height: 100svh; overflow: hidden; z-index: 1;
+  --plot-x: 40%; --plot-y: 70px; --plot-w: 55%; --plot-h: 70%;
+}
+.xp-stage > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.xp-fade {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(7, 8, 11, 0.85) 0%, rgba(7, 8, 11, 0.4) calc(var(--gutter) + var(--xp-card)), transparent calc(var(--gutter) + var(--xp-card) + 120px));
+}
+.xp-error { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 13px; color: var(--ink-3); }
+
+.xp-steps { position: relative; z-index: 2; margin-top: -100svh; pointer-events: none; }
+.xp-step { min-height: 90svh; display: flex; align-items: center; padding: 0 var(--gutter); }
+.xp-step:last-child { min-height: 150svh; } /* the stage stays pinned a while after the last card centers */
+.xp-card {
+  pointer-events: auto; width: var(--xp-card); padding: 22px 24px 20px; border-radius: 16px;
+  background: rgba(14, 16, 22, 0.8); border: 1px solid var(--line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: 0.3; transform: translateY(10px); transition: opacity 0.5s var(--ease-out), transform 0.7s var(--ease-out);
+}
+.xp-step.active .xp-card { opacity: 1; transform: none; }
+.xp-card .k { font: 500 11px var(--font-mono); color: var(--ink-3); letter-spacing: 0.06em; margin: 0 0 10px; }
+.xp-card h4 { font: 600 1.4rem/1.12 var(--font-display); letter-spacing: -0.02em; margin: 0; color: var(--ink); }
+.xp-card p { font-size: 15px; margin: 0.7rem 0 0; }
+.xp-card .formula { font-size: 14px; margin: 0.9rem 0 0; }
+.xp-card .note { font-size: 12.5px; color: var(--ink-3); }
+.y { color: var(--accent); } .n { color: var(--no); } .m { color: var(--missed); }
+
+/* overlays inside a stage, positioned against the free area */
+.xp-hud { position: absolute; z-index: 3; pointer-events: none; font-size: 13px; color: var(--ink-2); }
+.xp-hud .lbl { font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.xp-hud .big { font: 500 2rem/1 var(--font-mono); color: var(--ink); letter-spacing: -0.03em; }
+.xp-readout {
+  left: var(--plot-x); top: calc(var(--plot-y) + var(--plot-h) - 6px);
+  display: flex; flex-wrap: wrap; gap: 6px 26px; align-items: baseline; font: 500 12px var(--font-mono); color: var(--ink-3);
+}
+.xp-readout b { color: var(--ink); font-weight: 500; }
+.xp-patients { right: calc(100% - var(--plot-x) - var(--plot-w)); top: calc(var(--plot-y) - 8px); display: flex; gap: 6px; pointer-events: auto; }
+.chip {
+  font: 500 12px var(--font-body); color: var(--ink-2); background: rgba(14, 16, 22, 0.8); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; transition: border-color 0.2s, color 0.2s;
+}
+.chip:hover { color: var(--ink); border-color: var(--ink-3); }
+.chip[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+
+/* KNN vote */
+.xp-vote {
+  left: calc(var(--plot-x) + 10px); top: calc(var(--plot-y) + var(--plot-h) - 150px); width: 270px;
+  padding: 12px 14px; border-radius: 12px; background: rgba(14, 16, 22, 0.76); border: 1px solid var(--line);
+  opacity: 0; transform: translateY(6px); transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+}
+.xp-vote.on { opacity: 1; transform: none; }
+.ballot { display: flex; flex-wrap: wrap; gap: 3px; margin: 10px 0 8px; min-height: 9px; }
+.ballot i { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-2); }
+.ballot i.y { background: var(--accent); box-shadow: 0 0 6px rgba(229, 56, 59, 0.8); }
+.ballot i.n { background: var(--no); }
+.sharebar { position: relative; height: 8px; border-radius: 4px; background: var(--no); overflow: hidden; margin: 10px 0 8px; display: none; }
+.sharebar span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+.sharebar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink); }
+.xp-vote.many .ballot { display: none; }
+.xp-vote.many .sharebar { display: block; }
+.tally { font: 500 12px var(--font-mono); }
+.verdict {
+  display: inline-block; margin-top: 8px; font: 600 12px var(--font-body); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--no); color: #cfe0ff; background: rgba(63, 127, 209, 0.16);
+}
+.verdict.yes { border-color: var(--accent); color: #ffd3d4; background: rgba(229, 56, 59, 0.2); }
+
+/* tree stats */
+.xp-tree-stats { right: calc(100% - var(--plot-x) - var(--plot-w)); top: calc(var(--plot-y) - 14px); text-align: right; opacity: 0; transition: opacity 0.5s; }
+.xp-tree-stats.on { opacity: 1; }
+.xp-tree-stats .row { display: flex; gap: 22px; justify-content: flex-end; }
+
+/* phones and narrow windows: the animation on top, cards along the bottom */
+@media (max-width: 899px) {
+  :root { --xp-card: 100%; }
+  .xp-fade { background: linear-gradient(180deg, transparent 52%, rgba(7, 8, 11, 0.7) 75%); }
+  .xp-step { align-items: flex-end; padding-bottom: 5svh; }
+  .xp-card { padding: 16px 18px 14px; }
+  .xp-card h4 { font-size: 1.2rem; }
+  .xp-card p { font-size: 14px; }
+  .xp-hud .big { font-size: 1.3rem; }
+  .xp-vote { width: auto; right: 14px; padding: 8px 10px; top: calc(var(--plot-y) + 4px); }
+  .xp-readout { top: calc(var(--plot-y) + var(--plot-h) + 4px); left: 14px; gap: 4px 14px; font-size: 11px; }
+  .xp-patients { right: 14px; top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-card, .xp-vote { transition: none; }
+}

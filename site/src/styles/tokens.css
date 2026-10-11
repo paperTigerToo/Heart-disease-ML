@@ -6,7 +6,7 @@
   --surface-2: #151821;
   --ink: #ecebe8;
   --ink-2: #a9acb4;
-  --ink-3: #6f737c;
+  --ink-3: #858a94;   /* >= 5.3:1 on every surface (WCAG AA for small text) */
   --line: rgba(255, 255, 255, 0.09);
 
   /* data roles, validated with the dataviz palette checker on #0b0c10 */

@@ -10,7 +10,7 @@ const DEFAULTS = {
 
 // quadrant brightness order: TP, FN, FP, TN
 const LOW = 0.12;
-const CAUGHT = [3, 3, 0.35, 0.35]; // results: spotlight sick people, caught (crimson) vs missed (amber)
+const CAUGHT = [3, 3, 0.14, 0.14]; // results: spotlight sick people, caught (crimson) vs missed (amber)
 const RAW = {
   hero: { ox: 0.62, oy: 0.05, s: 1.05 },
   topic: { s: 0.85, loosen: 0.25 },
@@ -37,6 +37,8 @@ const RAW = {
   "score-f1": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, 1, LOW] },
   "score-auc": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1 },
   "score-threshold": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, dim: 0.3 }, // the explorer is a different model: let it lead
+  "models-intro": { s: 0.85, loosen: 0.2 },
+  models: { s: 0.85, dim: 0 }, // the explainers have their own stages; the heart steps back
   "results-leaderboard": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-tradeoff": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-curves": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.9 },

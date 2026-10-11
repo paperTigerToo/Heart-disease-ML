@@ -7,7 +7,7 @@ export const pct1 = (v) => `${(v * 100).toFixed(1)}%`;
 export const int = d3.format(",");
 export const dur = (ms) => (reducedMotion ? 0 : ms);
 
-export const FEATURE_LABEL = {
+const FEATURE_LABEL = {
   BMI: "BMI", Smoking: "Smoking", AlcoholDrinking: "Heavy drinking", Stroke: "Stroke",
   PhysicalHealth: "Poor physical-health days", MentalHealth: "Poor mental-health days",
   DiffWalking: "Difficulty walking", Sex: "Sex", AgeCategory: "Age group", Race: "Race / ethnicity",

@@ -16,11 +16,13 @@ const BLEND = 0.55;     // blending happens over the last 55% of a viewport befo
 const smooth = (t) => t * t * (3 - 2 * t);
 
 export function initStory() {
+  let lenis = null;
   if (!reducedMotion) {
-    const lenis = new Lenis({ autoRaf: false, lerp: 0.09 });
+    lenis = new Lenis({ autoRaf: false, lerp: 0.09 });
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
+    if (import.meta.env.DEV) window.__lenis = lenis; // lets review helpers jump without a smooth scroll
   }
 
   const stops = [...document.querySelectorAll("[data-stop]")].map((el) => {
@@ -70,6 +72,7 @@ export function initStory() {
     update,
     onStop: (fn) => listeners.push(fn),
     refresh: measure,
+    scrollTo: (el) => (lenis ? lenis.scrollTo(el, { duration: 1.6 }) : el.scrollIntoView()),
   };
 }
 
