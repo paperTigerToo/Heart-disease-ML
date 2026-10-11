@@ -148,10 +148,36 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 - [x] Pick from 14 animation mockups. **Picked 2026-10-11: K3 (3D sphere of neighbors), T2 (falling through a real tree), L1 (weighing the evidence), A1 (mistakes get heavier), N1 (signal flow).**
 - [ ] Rewrite the "Inside the models" card copy in your own voice.
 
+**iPhone review** (added 2026-10-11)
+
+*Setup:*
+- Your PC and iPhone must be on the same Wi-Fi.
+- Run `npm run phone` in `site/` (or ask the AI to start "site-phone").
+- When Windows asks, allow Node.js on **Private networks**.
+
+*Using it:* open the `Network: http://192.168.x.x:5173` address Vite prints, adding `?debug` for the overlay. Changes appear on the phone when files are saved. To check the real production build instead, run `npm run phone:build` and use port 4173.
+
+**What the `?debug` panel shows** (bottom left; tap the numbers to shrink it):
+- frame rate, with its worst frame
+- the current story stop
+- viewport size, with Safari's visible height
+- resize and error counts
+- an "open console" button that loads Eruda, an on-page console, because Safari's own inspector needs a Mac
+
+- [ ] Scroll top to bottom, then back up. For each chapter, check:
+  - **Read:** you can read everything without zooming, nothing is cut off, and the page never scrolls sideways.
+  - **Tap:** chips, the threshold slider, the leaderboard sort buttons, "Show the numbers" and chart tooltips (tap a bar or dot) all work with a thumb, and nothing fires by accident while scrolling.
+  - **Motion:** the panel shows 50 fps or more (flag anything under 30), and the phone isn't hot after a full scroll.
+  - **Scroll:** there are no jumps when Safari's toolbar hides or shows, the model animations stay pinned, and scrolling back up replays everything in reverse.
+- [ ] Rotate to landscape once inside a model explainer and once on a chart.
+- [ ] Try it with Low Power Mode on (it caps at 30 fps) and with Settings → Accessibility → Motion → Reduce Motion.
+- [ ] Repeat on cellular, using the test-deploy URL, to feel the real load time.
+- [ ] Report what you find as "chapter / step / what you saw", plus a screenshot or the panel numbers.
+
 **Review and ship**
 - [ ] Check that each chart says what you'd say about it in an interview.
-- [ ] Scroll through on your phone, and have 1–2 friends try it and note where they get lost.
-- [ ] Create the GitHub repo and enable Pages (Settings → Pages → Source: GitHub Actions).
+- [ ] Have 1–2 friends try it, ideally one with an Android phone, and note where they get lost.
+- [ ] Create the GitHub repo and enable Pages (Settings → Pages → Source: GitHub Actions). Decided 2026-10-11: a **public** repo named **`heart-disease-ml`**, on a different GitHub account from the one `gh` is logged into now. Switch `gh` to that account (`gh auth login`) first, and the AI can then create it and push.
 - [ ] Final proofread, then add the live link to your resume and LinkedIn.
 - [ ] Ask for a walkthrough of any part you'd want to explain in an interview.
 
@@ -192,14 +218,33 @@ There are three single-file pages in `mockups/`, sharing one dark-cinematic styl
 - [ ] *Optional extras:* permutation importance (the default importance favors continuous features like BMI), a fairness check of recall by sex, race and age, and HistGradientBoosting.
 
 **Phase 5b: Model explainer animations** (mockups first, then rebuild)
-- [x] `analysis/export_explainers.py` → `site/public/data/explainers.json` (133 KB: the 3D sample with SMOTEENN rows, a real depth-3 tree, logistic-regression and MLP weights, three example patients).
+- [x] `analysis/export_explainers.py` → `site/public/data/explainers.json` (a real depth-3 tree, logistic-regression and MLP weights, three example patients) and `points.json` (the 3D sample with SMOTEENN rows, shared with chapter 5).
 - [x] 14 mockup concepts built; the user picked 5.
 - [x] Chapter 07 "Inside the models" in `site/index.html`, one scroll-driven explainer per model in `site/src/explainers/` (own chunk, ~14 KB gzipped, loaded after the charts): logistic regression, decision tree / forest, KNN in 3D, AdaBoost, neural net. Chapters renumbered to 10.
 - [x] Removed the mockups, the unused export pieces (decision maps, age × health sample) and dead CSS/exports.
 - [x] Fixed the grey 3D background (scene.background instead of setClearColor).
 
+**Phase 5c: Size and mobile** (2026-10-11)
+- [x] Size: a visit went from about 430 KB to **317 KB** (gzip, as GitHub Pages serves it). On disk: 1.30 MB → 1.09 MB.
+  - **Data diet:** the 2,744-point SMOTE/PCA sample was stored twice. It now ships once, in `points.json` (written by `export_explainers.py`). Curves are rounded to 3 decimals. Data went from 94 to 58 KB.
+  - **Fonts:** body text uses the system font. Space Grotesk 600 is self-hosted and subset to the characters the site uses (8.6 KB, OFL license in `site/src/assets/fonts/`). Fonts went from 88 to 9 KB, and the site no longer contacts Google.
+- [ ] *Future size options* (not done; totals assume the work above):
+  - Replace GSAP, ScrollTrigger and SplitText with a small text-reveal module: −44 KB → about 273 KB.
+  - Replace three.js with a lean WebGL layer (the heart, the KNN sphere and the bloom): about −115 KB → about 200 KB. This is 1–2 days of work.
+  - Put Cloudflare in front of a custom domain: brotli compression and long caching cut about 18% more.
+- [x] Phone tooling: `npm run phone` / `phone:build` (Wi-Fi), the "site-phone" launch entry, and the `?debug` overlay (its own 1 KB chunk; normal visitors never load it).
+- [x] Mobile fixes:
+  - **Tooltips:** chart tooltips now show on tap.
+  - **Safari toolbar:** the 3D canvas is sized by `100lvh`, and both the canvas and the explainers skip resizes that didn't change their size, so the toolbar sliding no longer reallocates the bloom buffers.
+  - **Tap targets:** 44 px hit areas for chips, the slider and "Show the numbers".
+  - **Small text:** labels under 12 px were raised on phones.
+  - **Charts:** they now draw at their real width in narrow columns (`chartWidth()` in `charts/util.js`), so text stays 12 px instead of shrinking to about 7 px. Narrow-column layouts: the leaderboard puts names above the dots, the two-panel charts stack, the 100-person grid is 10 × 10, and the axis labels thin out.
+  - **Landscape and tablets:** phones held sideways get the side-by-side explainer layout, and upright tablets get the phone layout (heart on top).
+  - **Smaller fixes:** the accuracy axis no longer repeats labels, and the feature-card caption no longer says "hover".
+- [x] Emulated sweep at 375×667, 430×932, 844×390, 768×1024 and 1440×900: no sideways overflow, and no tap target under 44 px on touch screens.
+
 **Phase 6: Ship**
-- [ ] A GitHub Actions workflow for Pages (with Vite's `base` set to the repo name).
+- [x] A GitHub Actions workflow for Pages: `.github/workflows/deploy.yml`, which builds `site/` on a push to `master` (`base: "./"` works under any repo name).
 - [ ] A README with the story summary, how to reproduce the results, and data attribution.
 - [ ] Deploy and check the live site.
 

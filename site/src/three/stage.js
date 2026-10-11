@@ -5,7 +5,9 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
-export const isMobile = () => innerWidth < 760;
+// phones, and tablets held upright: the heart sits on top and the text scrolls beneath it
+// (must match the phone media queries in sections.css)
+export const isMobile = () => innerWidth < 760 || (innerWidth < 1100 && innerHeight > innerWidth);
 
 export function createStage(canvas) {
   let renderer;
@@ -26,14 +28,19 @@ export function createStage(canvas) {
   composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.45, 0.5, 0.1));
   composer.addPass(new OutputPass());
 
-  const stage = { renderer, scene, camera, composer, halfW: 1, halfH: 1 };
+  const stage = { renderer, scene, camera, composer, halfW: 1, halfH: 1, w: 0, h: 0 };
   function resize() {
+    // the canvas's own CSS size (100lvh) stays put while Safari's toolbar slides in and out,
+    // so scrolling on a phone never reallocates the bloom buffers
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (w === stage.w && h === stage.h) return;
+    stage.w = w; stage.h = h;
     const dpr = Math.min(devicePixelRatio, isMobile() ? 1.5 : 2);
     renderer.setPixelRatio(dpr);
-    renderer.setSize(innerWidth, innerHeight, false);
+    renderer.setSize(w, h, false);
     composer.setPixelRatio(dpr);
-    composer.setSize(innerWidth, innerHeight);
-    camera.aspect = innerWidth / innerHeight;
+    composer.setSize(w, h);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
     // visible half-size of the z = 0 plane, used to lay out formations
     stage.halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;

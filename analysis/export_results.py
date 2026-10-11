@@ -88,6 +88,10 @@ def r4(x):
     return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), 4)
 
 
+def r3(x):
+    return round(float(x), 3)
+
+
 def cached(key, fn):
     """Return fn()'s result from analysis/.cache/<key>.joblib, computing it once."""
     path = CACHE / f"{key}.joblib"
@@ -146,8 +150,8 @@ def curves(y_true, proba):
     # interpolated precision: best precision achievable at recall >= r
     pr_prec = [float(prec[rec >= r].max()) if (rec >= r).any() else 0.0 for r in grid]
     return {
-        "roc": [[r4(f), r4(t)] for f, t in zip(grid, roc_tpr)],
-        "pr": [[r4(r), r4(p)] for r, p in zip(grid, pr_prec)],
+        "roc": [[r3(f), r3(t)] for f, t in zip(grid, roc_tpr)],
+        "pr": [[r3(r), r3(p)] for r, p in zip(grid, pr_prec)],
     }
 
 
@@ -496,7 +500,8 @@ def main():
         ],
         "importance_after_smoteenn": [{"feature": f, "importance": r4(v)} for f, v in
                                       sorted(zip(x_train.columns, imp_after), key=lambda t: -t[1])],
-        "illustration": illus,
+        # the points themselves ship once, in points.json (export_explainers.py draws the same sample)
+        "illustration": {k: v for k, v in illus.items() if k != "points"},
     }
 
     naive_json = {

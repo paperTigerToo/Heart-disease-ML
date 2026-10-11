@@ -80,8 +80,9 @@
 .xp-tree-stats.on { opacity: 1; }
 .xp-tree-stats .row { display: flex; gap: 22px; justify-content: flex-end; }
 
-/* phones and narrow windows: the animation on top, cards along the bottom */
-@media (max-width: 899px) {
+/* phones and narrow windows: the animation on top, cards along the bottom. Wide, short screens
+   (a phone held sideways) keep the side-by-side layout; must match plotRect() in engine.js */
+@media (max-width: 599px), (max-width: 899px) and (max-aspect-ratio: 7/5) {
   :root { --xp-card: 100%; }
   .xp-fade { background: linear-gradient(180deg, transparent 52%, rgba(7, 8, 11, 0.7) 75%); }
   .xp-step { align-items: flex-end; padding-bottom: 5svh; }
@@ -90,7 +91,8 @@
   .xp-card p { font-size: 14px; }
   .xp-hud .big { font-size: 1.3rem; }
   .xp-vote { width: auto; right: 14px; padding: 8px 10px; top: calc(var(--plot-y) + 4px); }
-  .xp-readout { top: calc(var(--plot-y) + var(--plot-h) + 4px); left: 14px; gap: 4px 14px; font-size: 11px; }
+  .xp-readout { top: calc(var(--plot-y) + var(--plot-h) + 4px); left: 14px; gap: 4px 14px; font-size: 12px; }
+  .xp-card .k, .xp-hud .lbl { font-size: 12px; } /* nothing under 12 px on a phone */
   .xp-patients { right: 14px; top: 12px; }
 }
 

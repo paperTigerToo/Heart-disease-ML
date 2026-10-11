@@ -1,6 +1,6 @@
 // Chapter 2: the survey questions, heart-disease rates, and how answers become numbers.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, yGrid, dur, pct1, int, featureLabel, once } from "./util.js";
+import { svgIn, legend, dataTable, yGrid, dur, pct1, int, featureLabel, once, chartWidth } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 // Feature cards, grouped by kind of question
@@ -24,7 +24,8 @@ export function ratesChart(el, ctx) {
     { title: "By self-rated general health", data: byName.GenHealth.categories, short: (v) => v },
   ];
   const maxRate = d3.max(panels.flatMap((p) => p.data.map((d) => d.rate)));
-  const W = 520, H = 170, m = { t: 26, r: 8, b: 26, l: 40 };
+  const { W, narrow } = chartWidth(el);
+  const m = { t: 26, r: 8, b: narrow ? 38 : 26, l: 40 }, H = 144 + m.b; // phones: room for two-line labels
   legend(el, [{ label: "Heart-disease rate", color: "var(--accent)", kind: "square" },
     { label: `All respondents · ${pct1(overall)}`, color: "var(--ink-3)", kind: "dash" }]);
   const bars = [];
@@ -35,9 +36,12 @@ export function ratesChart(el, ctx) {
     const x = d3.scaleBand().domain(p.data.map((d) => d.value)).range([m.l, W - m.r]).padding(0.18);
     const y = d3.scaleLinear().domain([0, maxRate * 1.08]).range([H - m.b, m.t]);
     yGrid(svg, y, m.l, W - m.r, [0, 0.1, 0.2, 0.3].filter((t) => t <= maxRate * 1.08), (d) => `${Math.round(d * 100)}%`);
-    svg.append("g").attr("class", "axis").selectAll("text").data(p.data).join("text")
-      .attr("x", (d) => x(d.value) + x.bandwidth() / 2).attr("y", H - m.b + 16).attr("text-anchor", "middle")
-      .text((d) => p.short(d.value));
+    // narrow bands: label every other one (always the last), and break two-word labels over two lines
+    const every = x.step() < 26 ? 2 : 1;
+    svg.append("g").attr("class", "axis").selectAll("text").data(p.data.filter((d, i) => i % every === 0 || i === p.data.length - 1))
+      .join("text").attr("y", H - m.b + 16).attr("text-anchor", "middle")
+      .selectAll("tspan").data((d) => (narrow ? p.short(d.value).split(" ") : [p.short(d.value)]).map((w) => [d, w])).join("tspan")
+      .attr("x", ([d]) => x(d.value) + x.bandwidth() / 2).attr("dy", (_, i) => (i ? "1.15em" : 0)).text(([, w]) => w);
     const b = svg.append("g").selectAll("rect").data(p.data).join("rect")
       .attr("x", (d) => x(d.value)).attr("width", x.bandwidth()).attr("rx", 3)
       .attr("y", y(0)).attr("height", 0).attr("fill", "var(--accent)")

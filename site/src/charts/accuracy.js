@@ -2,6 +2,7 @@
 import * as d3 from "d3";
 import { showTip, hideTip } from "./tooltip.js";
 import { reducedMotion } from "../scroll/story.js";
+import { chartWidth } from "./util.js";
 
 const IDS = ["logreg-22", "rf-22", "knn-22", "adaboost", "mlp-100"];
 const pct = (v) => `${(v * 100).toFixed(1)}%`;
@@ -9,7 +10,8 @@ const pct = (v) => `${(v * 100).toFixed(1)}%`;
 export function accuracyChart(el, ctx, { baseline = false } = {}) {
   const rows = IDS.map((id) => ({ id, label: ctx.m[id].family, acc: ctx.m[id].metrics.acc, rec: ctx.m[id].metrics.rec }));
   const base = ctx.n.baseline_accuracy;
-  const W = 520, rowH = 34, m = { t: 28, r: 64, b: 30, l: 150 };
+  const { W, narrow } = chartWidth(el);
+  const rowH = 34, m = { t: 28, r: narrow ? 50 : 64, b: 30, l: narrow ? 126 : 150 };
   const H = m.t + m.b + rowH * rows.length;
   const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
     .attr("aria-label", `Accuracy of five models${baseline ? ` compared with always guessing No (${pct(base)})` : ""}: ` +
@@ -17,7 +19,7 @@ export function accuracyChart(el, ctx, { baseline = false } = {}) {
   const accs = rows.map((r) => r.acc).concat(base);
   const x = d3.scaleLinear().domain([d3.min(accs) - 0.01, d3.max(accs) + 0.008]).range([m.l, W - m.r]);
   const y = d3.scaleBand().domain(IDS).range([m.t, H - m.b]).padding(0.4);
-  const ticks = x.ticks(5);
+  const ticks = x.ticks(5).filter((d) => Math.abs(d * 100 - Math.round(d * 100)) < 1e-6); // whole percents only
   svg.append("g").attr("class", "grid").selectAll("line").data(ticks).join("line")
     .attr("x1", x).attr("x2", x).attr("y1", m.t - 6).attr("y2", H - m.b);
   svg.append("g").attr("class", "axis").selectAll("text").data(ticks).join("text")
@@ -30,7 +32,9 @@ export function accuracyChart(el, ctx, { baseline = false } = {}) {
   const baseG = svg.append("g").style("opacity", 0);
   const baseLine = baseG.append("line").attr("x1", bx).attr("x2", bx).attr("y1", m.t - 14).attr("y2", m.t - 14)
     .attr("stroke", "var(--no)").attr("stroke-width", 2).attr("stroke-dasharray", "4 4");
-  baseG.append("text").attr("class", "label").attr("x", bx + 6).attr("y", m.t - 10).text(`Always say No · ${pct(base)}`);
+  const baseLabel = baseG.append("text").attr("class", "label").attr("x", bx + 6).attr("y", m.t - 10).text(`Always say No · ${pct(base)}`);
+  // too close to the right edge (narrow screens): put the label on the line's left
+  if (bx + 6 + baseLabel.node().getComputedTextLength() > W) baseLabel.attr("x", bx - 6).attr("text-anchor", "end");
 
   const dots = svg.append("g").selectAll("g").data(rows).join("g")
     .attr("transform", (d) => `translate(${m.l},${y(d.id) + y.bandwidth() / 2})`).style("opacity", 0);

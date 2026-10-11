@@ -1,6 +1,6 @@
 // Chapter 6: move the cut-off and watch the confusion matrix and every metric respond.
 import * as d3 from "d3";
-import { svgIn, xGrid, int, pct1, once, dur } from "./util.js";
+import { svgIn, xGrid, int, pct1, once, dur, chartWidth } from "./util.js";
 
 const METRICS = [
   { key: "acc", label: "Accuracy" }, { key: "prec", label: "Precision" },
@@ -28,7 +28,8 @@ export function thresholdChart(el, ctx) {
       <div class="cell" style="--c:var(--no)"><b data-k="fp"></b><span>false alarm (FP)</span></div>
       <div class="cell" style="--c:var(--no)"><b data-k="tn"></b><span>cleared (TN)</span></div>
     </div>`);
-  const W = 520, rowH = 30, m = { t: 4, r: 56, b: 24, l: 84 };
+  const { W } = chartWidth(el);
+  const rowH = 30, m = { t: 4, r: 56, b: 24, l: 84 };
   const H = m.t + m.b + rowH * METRICS.length;
   const svg = svgIn(el, W, H, "Accuracy, precision, recall and F1 at the selected cut-off");
   const x = d3.scaleLinear().domain([0, 1]).range([m.l, W - m.r]);

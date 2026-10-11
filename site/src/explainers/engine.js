@@ -9,7 +9,8 @@ export const C = {
   yes: "#e5383b", no: "#3f7fd1", noLight: "#5b93dc", missed: "#c98500", ember: "#d95926",
 };
 export const MONO = "500 11px ui-monospace, SFMono-Regular, Consolas, monospace";
-export const BODY = (size = 12, weight = 500) => `${weight} ${size}px Inter, system-ui, sans-serif`;
+const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'; // same as --font-body
+export const BODY = (size = 12, weight = 500) => `${weight} ${size}px ${FONT}`;
 
 // --- math -----------------------------------------------------------------
 export const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -64,10 +65,11 @@ export function explainer(section, impl) {
   }
 }
 
-// the area of the stage not covered by the step cards (cards sit left on wide screens, below on narrow ones)
+// the area of the stage not covered by the step cards (cards sit left on wide screens and on phones
+// held sideways, below on narrow ones; must match the phone media query in explainers.css)
 function plotRect(stage) {
   const W = stage.clientWidth, H = stage.clientHeight;
-  if (W >= 900) {
+  if (W >= 900 || (W >= 600 && W >= H * 1.4)) {
     const gutter = clamp(W * 0.04, 16, 56);
     const cardW = Math.min(27 * 16, W * 0.34);
     const x = gutter + cardW + Math.max(40, W * 0.035);
@@ -78,6 +80,9 @@ function plotRect(stage) {
 }
 
 function relayout(x) {
+  const W = x.stage.clientWidth, H = x.stage.clientHeight;
+  if (W === x.W && H === x.H) return; // e.g. Safari's toolbar moving: the 100svh stage keeps its size
+  x.W = W; x.H = H;
   x.plot = plotRect(x.stage);
   for (const k of ["x", "y", "w", "h"]) x.stage.style.setProperty(`--plot-${k}`, `${x.plot[k]}px`);
   if (x.ready) x.impl.resize?.(x);

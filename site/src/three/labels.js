@@ -50,8 +50,9 @@ export function createLabels(stage, heart, ctx) {
         heart.toWorld(...d.at(), v).project(stage.camera);
         // keep labels on screen: shift left when they would run past the right edge
         const left = (v.x * 0.5 + 0.5) * innerWidth;
-        d.el.style.left = `${Math.max(8, Math.min(left, innerWidth - d.el.offsetWidth - 12))}px`;
-        d.el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`;
+        const right = document.documentElement.clientWidth; // excludes a desktop scrollbar
+        d.el.style.left = `${Math.max(8, Math.min(left, right - d.el.offsetWidth - 12))}px`;
+        d.el.style.top = `${(-v.y * 0.5 + 0.5) * stage.h}px`;
       }
     },
   };

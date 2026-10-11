@@ -1,12 +1,13 @@
 // Chapters 3–4: accuracy vs. number of features, the people the first model missed,
 // and why (predicted risk scores by true class).
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, int, featureLabel, once } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, int, featureLabel, once, chartWidth } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 export function accuracyFeaturesChart(el, ctx) {
   const data = ctx.n.accuracy_vs_features;
-  const W = 520, H = 230, m = { t: 14, r: 16, b: 34, l: 46 };
+  const { W } = chartWidth(el);
+  const H = 230, m = { t: 14, r: 16, b: 34, l: 46 };
   const svg = svgIn(el, W, H, `Random-forest accuracy with the top 1 to ${data.length} features: from ${pct1(data[0].acc)} to ${pct1(data[data.length - 1].acc)}, never far from 90%`);
   const x = d3.scaleLinear().domain([1, data.length]).range([m.l, W - m.r]);
   const [lo, hi] = d3.extent(data, (d) => d.acc);
@@ -38,7 +39,8 @@ export function accuracyFeaturesChart(el, ctx) {
 export function missedChart(el, ctx) {
   const naive = ctx.m["logreg-22"];
   const caught = Math.round(naive.metrics.rec * 100);
-  const W = 520, cols = 20, s = 22, gap = 4, rows = 5;
+  const { W, narrow } = chartWidth(el);
+  const cols = narrow ? 10 : 20, s = 22, gap = 4, rows = 100 / cols; // phones: a 10 × 10 grid
   const H = rows * (s + gap) + 4;
   legend(el, [{ label: `Caught · ${caught}`, color: "var(--accent)" }, { label: `Missed · ${100 - caught}`, color: "var(--missed)", kind: "ring" }]);
   const svg = svgIn(el, W, H, `Of every 100 people with heart disease, the first model caught ${caught} and missed ${100 - caught}`);
@@ -69,7 +71,8 @@ export function probabilitiesChart(el, ctx) {
     { key: "Yes", label: "Heart disease (Yes)", color: "var(--accent)", v: share(h.yes) },
   ];
   const yesBelow = d3.sum(h.yes.filter((_, i) => h.edges[i + 1] <= 0.5)) / d3.sum(h.yes);
-  const W = 520, H = 220, m = { t: 14, r: 12, b: 34, l: 46 };
+  const { W } = chartWidth(el);
+  const H = 220, m = { t: 14, r: 12, b: 34, l: 46 };
   legend(el, [...series.map((s) => ({ label: s.label, color: s.color, kind: "line" })),
     { label: "Cut-off 0.5", color: "var(--ink-2)", kind: "dash" }]);
   const svg = svgIn(el, W, H, `Predicted risk scores: ${pct1(yesBelow)} of people with heart disease score below the 0.5 cut-off`);
@@ -88,8 +91,13 @@ export function probabilitiesChart(el, ctx) {
   });
   svg.append("line").attr("x1", x(0.5)).attr("x2", x(0.5)).attr("y1", m.t).attr("y2", H - m.b)
     .attr("stroke", "var(--ink-2)").attr("stroke-width", 1.5).attr("stroke-dasharray", "4 4");
-  svg.append("text").attr("class", "label").attr("x", x(0.5) + 8).attr("y", m.t + 12)
+  const cutLabel = svg.append("text").attr("class", "label").attr("x", x(0.5) + 8).attr("y", m.t + 12)
     .text(`${pct1(yesBelow)} of sick people score below 0.5`);
+  // narrow screens: break it over two lines instead of running off the edge
+  if (x(0.5) + 8 + cutLabel.node().getComputedTextLength() > W) {
+    cutLabel.text(null).selectAll("tspan").data([`${pct1(yesBelow)} of sick people`, "score below 0.5"]).join("tspan")
+      .attr("x", x(0.5) + 8).attr("dy", (_, i) => (i ? "1.2em" : 0)).text((t) => t);
+  }
   const cross = svg.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)").style("display", "none");
   svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent")
     .on("pointermove", function (e) {

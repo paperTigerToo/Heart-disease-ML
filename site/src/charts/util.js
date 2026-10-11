@@ -17,6 +17,16 @@ const FEATURE_LABEL = {
 export const featureLabel = (name) =>
   FEATURE_LABEL[name] ?? (name.startsWith("Race_") ? `Race: ${name.slice(5)}` : name);
 
+// Charts are designed 520 units wide. In a narrow column (phones, landscape phones, small
+// laptops) they're drawn at their real pixel width instead, with a phone layout, so 12 px
+// text stays 12 px rather than shrinking with the whole chart.
+export function chartWidth(el) {
+  const cs = getComputedStyle(el);
+  const w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (w >= 440) return { W: 520, narrow: false }; // the 520 design, scaled down 15% at most
+  return { W: Math.max(280, Math.floor(w)), narrow: true };
+}
+
 export function svgIn(el, W, H, label) {
   return d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", label);
 }

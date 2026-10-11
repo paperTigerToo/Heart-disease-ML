@@ -16,7 +16,8 @@ b, strong { color: var(--ink); font-weight: 600; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* fixed 3D stage + cinematic overlays */
-#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; display: block; }
+/* 100lvh: as tall as the screen with Safari's toolbar hidden, so the toolbar sliding in and out never resizes it */
+#gl { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; z-index: 0; display: block; }
 .no-webgl #gl { display: none; }
 .vignette {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;

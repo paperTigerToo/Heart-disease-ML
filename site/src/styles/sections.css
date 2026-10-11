@@ -63,14 +63,16 @@ main { position: relative; z-index: 3; }
 .about ul { padding-left: 1.1rem; color: var(--ink-2); }
 .disclaimer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 1rem; margin-top: 2rem; }
 
-/* phones: the heart sits in the top part of the screen, steps scroll beneath it */
-@media (max-width: 760px) {
-  :root { --col: 100%; }
+/* phones and upright tablets: the heart sits in the top part of the screen, steps scroll
+   beneath it (must match isMobile() in three/stage.js) */
+@media (max-width: 759px), (max-width: 1099px) and (orientation: portrait) {
+  :root { --col: min(100%, 38rem); }
   body { font-size: 16px; }
   .hero { padding-bottom: 16svh; }
   .chapter { padding-top: 45svh; }
   .chapter-head { min-height: 40svh; }
   .step { margin-bottom: 60svh; padding: 20px; background: rgba(10, 11, 15, 0.82); }
+  .step, .chapter-head { margin-inline: auto; } /* centered under the heart on tablets */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -119,7 +121,7 @@ main { position: relative; z-index: 3; }
 
 /* no-WebGL fallback heart */
 #fallback { position: fixed; top: 0; right: 0; width: 55vw; height: 100vh; z-index: 0; pointer-events: none; }
-@media (max-width: 760px) { #fallback { width: 100vw; height: 45vh; } }
+@media (max-width: 759px), (max-width: 1099px) and (orientation: portrait) { #fallback { width: 100vw; height: 45vh; } }
 
 @media (prefers-reduced-motion: reduce) {
   .loader path { animation: none; stroke-dasharray: none; }

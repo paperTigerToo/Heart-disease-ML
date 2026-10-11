@@ -1,7 +1,7 @@
 // Neural network: the actual trained pipeline (scaler -> PCA to 18 -> 100 ReLU -> 1). A real
 // patient's answers travel through it as pulses of light; neurons glow when they fire.
 import { max } from "d3";
-import { C, MONO, clamp, lerp, seg, smooth, rgba, mix, sigmoid, layer, drawGlow } from "./engine.js";
+import { C, MONO, BODY, clamp, lerp, seg, smooth, rgba, mix, sigmoid, layer, drawGlow } from "./engine.js";
 
 export function neuralExplainer(stage, ex) {
   const M = ex.mlp, FEAT = ex.features;
@@ -16,7 +16,7 @@ export function neuralExplainer(stage, ex) {
   const rf = stage.querySelector(".r-f"), rp = stage.querySelector(".r-p"), rv = stage.querySelector(".r-v");
   const byKey = Object.fromEntries(ex.examples.map((e) => [e.key, e]));
   let key = "borderline", F = forward(byKey[key].x), flows;
-  let L, nodes, web;
+  let L, nodes, web, labels;
 
   // the strongest signals in each layer for this patient
   function buildFlows() {
@@ -42,7 +42,8 @@ export function neuralExplainer(stage, ex) {
   function layout(x) {
     L.fit();
     const P = x.plot;
-    const labelW = P.mobile ? 24 : 150;
+    labels = !P.mobile && (P.h - 72) / FEAT.length >= 12; // input names only when their rows don't overlap
+    const labelW = labels ? 150 : 24;
     const X = [P.x + labelW + 10, P.x + labelW + (P.w - labelW) * 0.36, P.x + labelW + (P.w - labelW) * 0.7, P.x + P.w - 30];
     const colY = (n, i, pad) => P.y + pad + ((P.h - 60 - pad * 2) * (i + 0.5)) / n;
     nodes = [
@@ -114,14 +115,14 @@ export function neuralExplainer(stage, ex) {
 
       // inputs: brighter = further from average for this patient
       const sMax = max(F.s, Math.abs) || 1, cMax = max(F.c, Math.abs) || 1, hMax = max(F.h) || 1;
-      ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.font = "500 11px Inter, system-ui, sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.font = BODY(11);
       nodes[0].forEach((nd, i) => {
         const v = F.s[i] - M.pca_mean[i], m = clamp(Math.abs(v) / sMax);
         ctx.globalAlpha = lit[0];
         if (m > 0.15) drawGlow(ctx, v > 0 ? C.yes : C.no, nd.x, nd.y, 6 + 10 * m);
         ctx.fillStyle = mix("#2a2e3a", v > 0 ? "#ff9a9c" : "#9cc0f0", m);
         ctx.beginPath(); ctx.arc(nd.x, nd.y, 3.6, 0, 7); ctx.fill();
-        if (!P.mobile) { ctx.fillStyle = rgba(C.ink2, 0.5 + 0.5 * m); ctx.fillText(ex.labels[FEAT[i]], nd.x - 10, nd.y); }
+        if (labels) { ctx.fillStyle = rgba(C.ink2, 0.5 + 0.5 * m); ctx.fillText(ex.labels[FEAT[i]], nd.x - 10, nd.y); }
       });
       // principal components
       nodes[1].forEach((nd, k) => {

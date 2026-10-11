@@ -1,4 +1,18 @@
-/* Locked design tokens (from mockup A: particle heart, crimson, Space Grotesk + Inter). */
+/* Locked design tokens (from mockup A: particle heart, crimson, Space Grotesk headings). */
+
+/* Space Grotesk 600 (the only weight used), self-hosted and subset to printable ASCII plus
+   the page's symbols: 8.6 KB instead of 88 KB of Google Fonts. Body text uses the device's
+   own font. To regenerate after adding a new symbol, request
+   https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600&text=<url-encoded characters>
+   with a Chrome user agent and download the woff2 it links. License: assets/fonts/OFL.txt */
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-600.woff2") format("woff2");
+}
+
 :root {
   color-scheme: dark;
   --bg: #07080b;
@@ -15,7 +29,7 @@
   --missed: #c98500;   /* sick people a model missed: always labeled */
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --gutter: clamp(16px, 5vw, 72px);
   --col: min(36rem, 42vw);

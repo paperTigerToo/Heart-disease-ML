@@ -2,9 +2,11 @@
 
     python analysis/export_explainers.py
 
-Writes site/public/data/explainers.json for the "Inside the models" chapter: the
-1,500-person training sample (with SMOTEENN's synthetic rows) in 3D, a real decision
-tree, the logistic-regression and neural-net weights, and three example patients.
+Writes two files to site/public/data/:
+  points.json      the 1,500-person training sample (with SMOTEENN's synthetic rows) in 3D,
+                   shared by the chapter 5 SMOTE chart and the KNN / boosting explainers
+  explainers.json  a real decision tree, the logistic-regression and neural-net weights,
+                   and three example patients
 
 Reuses the preprocessing, split and seed from export_results.py, so every number
 matches the main export. Takes about 20 seconds.
@@ -44,6 +46,10 @@ HEALTH_NAMES = list(GENHEALTH)  # 0 = Poor ... 4 = Excellent
 
 def r3(x):
     return round(float(x), 3)
+
+
+def r2(x):
+    return round(float(x), 2)
 
 
 def encoding(col):
@@ -138,26 +144,23 @@ def main():
     ytr, yte = y_train.to_numpy(), y_test.to_numpy()
     rng = np.random.default_rng(SEED)
 
-    # --- 1. The 1,500-person sample in 3D (the first two axes match resampling.json) ----
+    # --- 1. The 1,500-person sample in 3D (the first two axes are chapter 5's 2D view) ----
     log("PCA sample")
     full_scaler = StandardScaler().fit(x_train)
     Xs = full_scaler.transform(x_train)
     pca3 = PCA(n_components=3, random_state=SEED).fit(Xs)
     X_all, y_all, synthetic, kept, parents = smote_sample(Xs, ytr)
-    xyz = pca3.transform(X_all)
-    old = json.loads((OUT / "resampling.json").read_text(encoding="utf-8"))["illustration"]["points"]
-    old_xy = np.array([[p["x"], p["y"]] for p in old])
-    flip = np.sign(np.sum(old_xy * xyz[:, :2], axis=0))  # PCA signs are arbitrary; keep the 2D export's
-    xyz[:, :2] *= flip
-    assert np.allclose(old_xy, xyz[:, :2], atol=2e-3), "sample no longer matches resampling.json"
+    # PCA signs are arbitrary: turn each axis so its strongest loading is positive, so the
+    # pictures never mirror between runs
+    flip = np.sign(pca3.components_[np.arange(3), np.abs(pca3.components_).argmax(axis=1)])
+    xyz = pca3.transform(X_all) * flip
     points = []
     n_orig = int((~synthetic).sum())
     for i in range(len(y_all)):
         pa, pb = parents[i - n_orig] if synthetic[i] else (-1, -1)
-        points.append([r3(xyz[i, 0]), r3(xyz[i, 1]), r3(xyz[i, 2]), int(y_all[i]),
+        points.append([r2(xyz[i, 0]), r2(xyz[i, 1]), r2(xyz[i, 2]), int(y_all[i]),
                        int(synthetic[i]), int(kept[i]), pa, pb])
-    comps = pca3.components_.copy()
-    comps[:2] *= flip[:, None]
+    comps = pca3.components_ * flip[:, None]
     axes = []
     for c in comps:
         top = np.argsort(-np.abs(c))[:5]
@@ -272,11 +275,11 @@ def main():
         "W2": [r4(v[0]) for v in net.coefs_[1]], "b2": r4(net.intercepts_[1][0]),
     }
 
+    points_json = {"explained": [r4(v) for v in pca3.explained_variance_ratio_], "axes": axes,
+                   "columns": ["x", "y", "z", "cls", "synthetic", "kept", "parentA", "parentB"],
+                   "points": points}
     explainers = {
         "labels": LABELS,
-        "pca": {"explained": [r4(v) for v in pca3.explained_variance_ratio_], "axes": axes,
-                "columns": ["x", "y", "z", "cls", "synthetic", "kept", "parentA", "parentB"],
-                "points": points},
         "tree": {"max_depth": 3, "class_weight": "balanced", "nodes": nodes, "test_metrics": tree_metrics,
                  "plinko": plinko, "plinko_note": "300 test-set people with heart disease and 300 without"},
         "logreg": logreg_json,
@@ -284,9 +287,10 @@ def main():
         "examples": examples,
         "features": cols,
     }
-    path = OUT / "explainers.json"
-    path.write_text(json.dumps(explainers, separators=(",", ":")), encoding="utf-8")
-    log(f"  explainers.json {path.stat().st_size / 1024:7.1f} KB")
+    for name, obj in (("points.json", points_json), ("explainers.json", explainers)):
+        path = OUT / name
+        path.write_text(json.dumps(obj, separators=(",", ":")), encoding="utf-8")
+        log(f"  {name:15s} {path.stat().st_size / 1024:7.1f} KB")
     log(f"tree test metrics: {tree_metrics}")
     for e in examples:
         log(f"  example {e['key']:10s} disease={e['has_disease']} logreg p={e['p']:.3f} mlp p={e['mlp_p']:.3f}")

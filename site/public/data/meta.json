@@ -1,1 +1,1 @@
-{"seed":42,"rows":319795,"train_rows":239846,"test_rows":79949,"test_classes":{"No":73106,"Yes":6843},"pca_components_for_90pct":18,"versions":{"python":"3.13.4","pandas":"2.3.2","numpy":"2.3.3","scikit-learn":"1.7.2","imbalanced-learn":"0.14.2"},"generated":"2026-10-07T13:17:26+00:00"}
+{"seed":42,"rows":319795,"train_rows":239846,"test_rows":79949,"test_classes":{"No":73106,"Yes":6843},"pca_components_for_90pct":18,"versions":{"python":"3.13.4","pandas":"2.3.2","numpy":"2.3.3","scikit-learn":"1.7.2","imbalanced-learn":"0.14.2"},"generated":"2026-10-11T21:04:54+00:00"}

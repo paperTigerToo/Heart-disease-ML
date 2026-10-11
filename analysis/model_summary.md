@@ -1,6 +1,6 @@
 # Model summary
 
-Test set: 79,949 rows (6,843 with heart disease). Seed 42. Generated 2026-10-07T13:17:26+00:00.
+Test set: 79,949 rows (6,843 with heart disease). Seed 42. Generated 2026-10-11T21:04:54+00:00.
 
 | Model | Balancing | Train rows | Acc | Prec | Recall | F1 | κ | ROC-AUC | PR-AUC | Caught (TP/all sick) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|

@@ -1,11 +1,11 @@
 // Loads the JSON written by analysis/export_results.py and fills data-bind spans.
 import { format } from "d3";
 
-const FILES = ["dataset", "naive", "models", "resampling", "threshold", "meta"];
+const FILES = ["dataset", "naive", "models", "resampling", "threshold", "meta", "points"];
 
 export async function loadData() {
   const base = import.meta.env.BASE_URL;
-  const [d, n, models, r, t, meta] = await Promise.all(
+  const [d, n, models, r, t, meta, pts] = await Promise.all(
     FILES.map((f) => fetch(`${base}data/${f}.json`).then((res) => {
       if (!res.ok) throw new Error(`data/${f}.json: ${res.status}`);
       return res.json();
@@ -15,7 +15,7 @@ export async function loadData() {
   const w = r.methods.find((x) => x.id === "class weights").weights;
   r.weight_ratio = w.Yes / w.No;
   const m = Object.fromEntries(models.models.map((x) => [x.id, x]));
-  return { d, n, m, models: models.models, r, t, meta };
+  return { d, n, m, models: models.models, r, t, meta, pts };
 }
 
 export function get(ctx, path) {

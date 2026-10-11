@@ -12,6 +12,9 @@ import { createHeart } from "./three/heart.js";
 import { createLabels } from "./three/labels.js";
 import { drawFallbackHeart } from "./three/fallback.js";
 
+// ?debug: phone review overlay (frame rate, viewport, errors, an on-page console)
+if (new URLSearchParams(location.search).has("debug")) import("./debug.js");
+
 const loader = document.getElementById("loader");
 const hideLoader = () => {
   loader.classList.add("done");
@@ -85,7 +88,7 @@ async function main() {
   // "Inside the models": its own chunk and data file, fetched once the rest is ready
   try {
     const { initExplainers } = await import("./explainers/index.js");
-    await initExplainers();
+    await initExplainers(ctx);
     story.refresh();
   } catch (err) {
     console.error("model explainers failed", err); // the rest of the story still works

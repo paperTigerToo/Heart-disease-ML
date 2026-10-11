@@ -1,6 +1,6 @@
 // Chapter 7: leaderboard, before→after trade-off, ROC/PR curves, feature importance.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, featureLabel, once } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, featureLabel, once, chartWidth } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 const SORTS = [
@@ -19,22 +19,25 @@ export function leaderboardChart(el, ctx) {
   el.insertAdjacentHTML("beforeend", `<div class="sorter" role="group" aria-label="Sort models by">${SORTS.map((s, i) =>
     `<button class="chip" data-key="${s.key}" aria-pressed="${i === 0}">${s.label}</button>`).join("")}</div>`);
   legend(el, Object.values(KIND));
-  const W = 520, rowH = 17, m = { t: 6, r: 52, b: 26, l: 230 };
+  const { W, narrow } = chartWidth(el);
+  const rowH = narrow ? 34 : 17, m = { t: 6, r: 52, b: 26, l: narrow ? 8 : 230 };
+  const dy = narrow ? 7 : 0, fs = narrow ? "12px" : "11px"; // phones: name above, dot below
   const H = m.t + m.b + rowH * models.length;
   const svg = svgIn(el, W, H, "All models ranked by the selected metric");
   const x = d3.scaleLinear().domain([0, 1]).range([m.l, W - m.r]);
   const y = d3.scaleBand().range([m.t, H - m.b]).padding(0.2);
   xGrid(svg, x, m.t, H - m.b, [0, 0.25, 0.5, 0.75, 1], (d) => `${d * 100}%`);
   const rows = svg.append("g").selectAll("g").data(models, (d) => d.id).join("g");
-  rows.append("text").attr("class", "label").attr("x", -10).attr("dy", "0.35em").attr("text-anchor", "end")
-    .style("font-size", "11px").style("font-weight", (d) => (d.id === "dummy" ? 600 : 500))
+  rows.append("text").attr("class", "label").attr("x", narrow ? 0 : -10).attr("y", narrow ? -6 : 0)
+    .attr("dy", narrow ? 0 : "0.35em").attr("text-anchor", narrow ? "start" : "end")
+    .style("font-size", fs).style("font-weight", (d) => (d.id === "dummy" ? 600 : 500))
     .style("fill", (d) => (d.id === "dummy" ? "var(--ink)" : null)).text((d) => d.label);
-  rows.append("line").attr("class", "stem").attr("stroke", "var(--line)").attr("stroke-width", 1);
-  rows.append("circle").attr("r", 5).attr("stroke-width", 2)
+  rows.append("line").attr("class", "stem").attr("y1", dy).attr("y2", dy).attr("stroke", "var(--line)").attr("stroke-width", 1);
+  rows.append("circle").attr("cy", dy).attr("r", 5).attr("stroke-width", 2)
     .attr("fill", (d) => (kindOf(d) === "baseline" ? "var(--surface)" : KIND[kindOf(d)].color))
     .attr("stroke", (d) => (kindOf(d) === "baseline" ? "var(--ink-2)" : "var(--surface)"));
-  rows.append("text").attr("class", "val label").attr("dy", "0.35em").style("font-size", "11px");
-  rows.append("rect").attr("x", -m.l + 10).attr("y", -rowH / 2).attr("width", W - 10).attr("height", rowH).attr("fill", "transparent")
+  rows.append("text").attr("class", "val label").attr("y", dy).attr("dy", "0.35em").style("font-size", fs);
+  rows.append("rect").attr("x", -m.l).attr("y", -rowH / 2).attr("width", W).attr("height", rowH).attr("fill", "transparent")
     .on("pointermove", (e, d) => showTip(e, `<b>${d.label}</b><br>${SORTS.map((s) => `${s.label} ${pct1(d.metrics[s.key])}`).join("<br>")}`))
     .on("pointerleave", hideTip);
 
@@ -72,20 +75,25 @@ export function tradeoffChart(el, ctx) {
   ];
   legend(el, [{ label: "Before (no balancing)", color: "var(--ink-2)", kind: "ring" }, { label: "After", color: "var(--accent)" }]);
   const panels = [{ key: "acc", title: "Accuracy" }, { key: "rec", title: "Recall" }];
-  const W = 520, pw = 170, gapP = 44, m = { t: 22, b: 24, l: 108 }, rowH = 32;
-  const H = m.t + m.b + rowH * rows.length;
+  const { W, narrow } = chartWidth(el);
+  const m = { t: 22, b: 24, l: 108 }, rowH = 32, gapP = 44;
+  const block = m.t + m.b + rowH * rows.length; // one panel's height
+  const pw = narrow ? W - m.l - 18 : 170, H = narrow ? block * 2 + 14 : block; // phones: the panels stack
   const svg = svgIn(el, W, H, "Logistic regression before and after each balancing method: " +
     rows.map((r) => `${r.label}: accuracy ${pct1(M[r.before].metrics.acc)} to ${pct1(M[r.id].metrics.acc)}, recall ${pct1(M[r.before].metrics.rec)} to ${pct1(M[r.id].metrics.rec)}`).join("; "));
-  const y = d3.scaleBand().domain(rows.map((r) => r.id)).range([m.t, H - m.b]).padding(0.3);
-  svg.append("g").selectAll("text").data(rows).join("text").attr("class", "label")
-    .attr("x", m.l - 12).attr("y", (r) => y(r.id) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end").text((r) => r.label);
+  const y = d3.scaleBand().domain(rows.map((r) => r.id)).range([m.t, block - m.b]).padding(0.3);
   const after = [];
   panels.forEach((p, i) => {
-    const x0 = m.l + i * (pw + gapP);
+    const x0 = narrow ? m.l : m.l + i * (pw + gapP);
+    const pg = svg.append("g").attr("transform", `translate(0,${narrow ? i * (block + 14) : 0})`);
+    if (narrow || i === 0) {
+      pg.append("g").selectAll("text").data(rows).join("text").attr("class", "label")
+        .attr("x", m.l - 12).attr("y", (r) => y(r.id) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end").text((r) => r.label);
+    }
     const x = d3.scaleLinear().domain([0, 1]).range([x0, x0 + pw]);
-    svg.append("text").attr("class", "label").attr("x", x0).attr("y", 12).style("fill", "var(--ink)").text(p.title);
-    xGrid(svg, x, m.t, H - m.b, [0, 0.5, 1], (d) => `${d * 100}%`);
-    const g = svg.append("g").selectAll("g").data(rows).join("g").attr("transform", (r) => `translate(0,${y(r.id) + y.bandwidth() / 2})`);
+    pg.append("text").attr("class", "label").attr("x", x0).attr("y", 12).style("fill", "var(--ink)").text(p.title);
+    xGrid(pg, x, m.t, block - m.b, [0, 0.5, 1], (d) => `${d * 100}%`);
+    const g = pg.append("g").selectAll("g").data(rows).join("g").attr("transform", (r) => `translate(0,${y(r.id) + y.bandwidth() / 2})`);
     const b = (r) => M[r.before].metrics[p.key], a = (r) => M[r.id].metrics[p.key];
     const line = g.append("line").attr("x1", (r) => x(b(r))).attr("x2", (r) => x(b(r))).attr("stroke", "var(--ink-3)").attr("stroke-width", 2);
     g.append("circle").attr("cx", (r) => x(b(r))).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--ink-2)").attr("stroke-width", 2);
@@ -110,29 +118,32 @@ export function curvesChart(el, ctx) {
   const prBase = ctx.d.positive_rate;
   legend(el, [...series.map((s) => ({ label: `${s.m.family} · ROC ${s.m.metrics.roc_auc.toFixed(2)}, PR ${s.m.metrics.pr_auc.toFixed(2)}`, color: s.color, kind: "line" })),
     { label: "Coin flip / always No", color: "var(--ink-3)", kind: "dash" }]);
-  const W = 520, pw = 216, ph = 216, m = { t: 22, l: 38, b: 34 }, gapP = 46;
-  const svg = svgIn(el, W, m.t + ph + m.b, "ROC and precision-recall curves for logistic regression, random forest and KNN");
+  const { W, narrow } = chartWidth(el);
+  const m = { t: 22, l: 38, b: 34 }, gapP = 46;
+  const pw = narrow ? W - m.l - 14 : 216, ph = pw, block = m.t + ph + m.b + (narrow ? 16 : 0);
+  const svg = svgIn(el, W, narrow ? block * 2 : block, "ROC and precision-recall curves for logistic regression, random forest and KNN");
   const paths = [];
   const panels = [
     { key: "roc", title: "ROC curve", xl: "False-positive rate", yl: "Recall", base: [[0, 0], [1, 1]] },
     { key: "pr", title: "Precision–recall", xl: "Recall", yl: "Precision", base: [[0, prBase], [1, prBase]] },
   ];
   panels.forEach((p, i) => {
-    const x0 = m.l + i * (pw + gapP);
+    const x0 = narrow ? m.l : m.l + i * (pw + gapP);
+    const pg = svg.append("g").attr("transform", `translate(0,${narrow ? i * block : 0})`);
     const x = d3.scaleLinear().domain([0, 1]).range([x0, x0 + pw]);
     const y = d3.scaleLinear().domain([0, 1]).range([m.t + ph, m.t]);
-    svg.append("text").attr("class", "label").attr("x", x0).attr("y", 12).style("fill", "var(--ink)").text(p.title);
-    yGrid(svg, y, x0, x0 + pw, [0, 0.5, 1], (d) => (i === 0 ? `${d * 100}%` : ""));
-    xGrid(svg, x, m.t + ph, m.t + ph, [0, 0.5, 1], (d) => `${d * 100}%`).select(".grid").remove();
-    svg.append("text").attr("class", "label").attr("x", x0 + pw / 2).attr("y", m.t + ph + 32).attr("text-anchor", "middle").text(p.xl);
+    pg.append("text").attr("class", "label").attr("x", x0).attr("y", 12).style("fill", "var(--ink)").text(p.title);
+    yGrid(pg, y, x0, x0 + pw, [0, 0.5, 1], (d) => (i === 0 || narrow ? `${d * 100}%` : ""));
+    xGrid(pg, x, m.t + ph, m.t + ph, [0, 0.5, 1], (d) => `${d * 100}%`).select(".grid").remove();
+    pg.append("text").attr("class", "label").attr("x", x0 + pw / 2).attr("y", m.t + ph + 32).attr("text-anchor", "middle").text(p.xl);
     const line = d3.line().x((d) => x(d[0])).y((d) => y(d[1]));
-    svg.append("path").attr("d", line(p.base)).attr("stroke", "var(--ink-3)").attr("stroke-width", 1.5).attr("stroke-dasharray", "4 4").attr("fill", "none");
+    pg.append("path").attr("d", line(p.base)).attr("stroke", "var(--ink-3)").attr("stroke-width", 1.5).attr("stroke-dasharray", "4 4").attr("fill", "none");
     for (const s of series) {
-      paths.push(svg.append("path").attr("d", line(s.m.curves[p.key])).attr("fill", "none").attr("stroke", s.color).attr("stroke-width", 2));
+      paths.push(pg.append("path").attr("d", line(s.m.curves[p.key])).attr("fill", "none").attr("stroke", s.color).attr("stroke-width", 2));
     }
     // hover: read every series at the pointer's x
-    const cross = svg.append("line").attr("y1", m.t).attr("y2", m.t + ph).attr("stroke", "var(--ink-3)").style("display", "none");
-    svg.append("rect").attr("x", x0).attr("y", m.t).attr("width", pw).attr("height", ph).attr("fill", "transparent")
+    const cross = pg.append("line").attr("y1", m.t).attr("y2", m.t + ph).attr("stroke", "var(--ink-3)").style("display", "none");
+    pg.append("rect").attr("x", x0).attr("y", m.t).attr("width", pw).attr("height", ph).attr("fill", "transparent")
       .on("pointermove", function (e) {
         const k = Math.round(Math.max(0, Math.min(1, x.invert(d3.pointer(e, this)[0]))) * 100);
         cross.style("display", null).attr("x1", x(k / 100)).attr("x2", x(k / 100));
@@ -153,13 +164,14 @@ export function importanceChart(el, ctx) {
   const after = new Map(ctx.r.importance_after_smoteenn.map((d) => [d.feature, d.importance]));
   const top = [...before.keys()].sort((a, b) => Math.max(after.get(b), before.get(b)) - Math.max(after.get(a), before.get(a))).slice(0, 10);
   legend(el, [{ label: "Before (original data)", color: "var(--ink-2)", kind: "ring" }, { label: "After SMOTEENN", color: "var(--accent)" }]);
-  const W = 520, rowH = 24, m = { t: 6, r: 20, b: 26, l: 170 };
+  const { W, narrow } = chartWidth(el);
+  const rowH = 24, m = { t: 6, r: 20, b: 26, l: 170 };
   const H = m.t + m.b + rowH * top.length;
   const svg = svgIn(el, W, H, "Random-forest feature importance before and after SMOTEENN: " +
     top.map((f) => `${featureLabel(f)} ${before.get(f).toFixed(3)} to ${after.get(f).toFixed(3)}`).join(", "));
   const x = d3.scaleLinear().domain([0, d3.max(top, (f) => Math.max(before.get(f), after.get(f)))]).nice().range([m.l, W - m.r]);
   const y = d3.scaleBand().domain(top).range([m.t, H - m.b]).padding(0.3);
-  xGrid(svg, x, m.t, H - m.b, x.ticks(4), d3.format(".2f"));
+  xGrid(svg, x, m.t, H - m.b, x.ticks(narrow ? 2 : 4), d3.format(".2f"));
   svg.append("g").selectAll("text").data(top).join("text").attr("class", "label")
     .attr("x", m.l - 12).attr("y", (f) => y(f) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end").text(featureLabel);
   const g = svg.append("g").selectAll("g").data(top).join("g").attr("transform", (f) => `translate(0,${y(f) + y.bandwidth() / 2})`);

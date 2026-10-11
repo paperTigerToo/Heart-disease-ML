@@ -1,14 +1,17 @@
 // Chapter 5: SMOTE + ENN on a real sample of training rows, and class counts per method.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, dur, int, once } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, dur, int, once, chartWidth } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 // mode "smote": synthetic points appear between their two real parents
 // mode "enn":   points ENN would remove fade out
 export function smoteChart(el, ctx, { mode = "smote" } = {}) {
   const ill = ctx.r.illustration;
-  const pts = ill.points;
-  const W = 520, H = 360, pad = 14;
+  // the shared sample (points.json): [x, y, z, has disease, synthetic, kept by ENN, parentA, parentB]
+  const pts = ctx.pts.points.map(([x, y, , cls, synthetic, kept, pa, pb]) => ({
+    x, y, cls, kind: synthetic ? "synthetic" : "original", kept: !!kept, parents: synthetic ? [pa, pb] : null }));
+  const { W } = chartWidth(el);
+  const H = Math.round((W * 360) / 520), pad = 14;
   const x = d3.scaleLinear().domain(d3.extent(pts, (p) => p.x)).range([pad, W - pad]).nice();
   const y = d3.scaleLinear().domain(d3.extent(pts, (p) => p.y)).range([H - pad, pad]).nice();
   const originals = pts.filter((p) => p.kind === "original");
@@ -65,17 +68,20 @@ export function smoteChart(el, ctx, { mode = "smote" } = {}) {
 export function balanceCompareChart(el, ctx) {
   const methods = ctx.r.methods;
   const rows = methods.flatMap((m) => ["No", "Yes"].map((k) => ({ m, k, v: m.counts[k] })));
-  const W = 520, rowH = 44, m = { t: 6, r: 70, b: 26, l: 150 };
+  const { W, narrow } = chartWidth(el);
+  const rowH = narrow ? 60 : 44, m = { t: 6, r: 70, b: 26, l: narrow ? 8 : 150 };
+  const above = narrow ? 18 : 0; // phones: each method's name sits above its bars
   const H = m.t + m.b + rowH * methods.length;
   legend(el, [{ label: "No", color: "var(--no)", kind: "square" }, { label: "Yes", color: "var(--accent)", kind: "square" }]);
   const svg = svgIn(el, W, H, "Training rows per class for each balancing method: " +
     methods.map((d) => `${d.label}: ${int(d.counts.No)} No, ${int(d.counts.Yes)} Yes`).join("; "));
   const x = d3.scaleLinear().domain([0, d3.max(rows, (d) => d.v)]).range([m.l, W - m.r]).nice();
   const y = d3.scaleBand().domain(methods.map((d) => d.id)).range([m.t, H - m.b]).paddingInner(0.3);
-  const sub = d3.scaleBand().domain(["No", "Yes"]).range([0, y.bandwidth()]).padding(0.12);
+  const sub = d3.scaleBand().domain(["No", "Yes"]).range([above, y.bandwidth()]).padding(0.12);
   xGrid(svg, x, m.t, H - m.b, x.ticks(4), d3.format("~s"));
   svg.append("g").selectAll("text").data(methods).join("text").attr("class", "label")
-    .attr("x", m.l - 12).attr("y", (d) => y(d.id) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end")
+    .attr("x", narrow ? m.l : m.l - 12).attr("y", (d) => (narrow ? y(d.id) + 12 : y(d.id) + y.bandwidth() / 2))
+    .attr("dy", narrow ? 0 : "0.35em").attr("text-anchor", narrow ? "start" : "end").style("fill", narrow ? "var(--ink)" : null)
     .text((d) => d.label);
   const bars = svg.append("g").selectAll("rect").data(rows).join("rect")
     .attr("x", m.l).attr("y", (d) => y(d.m.id) + sub(d.k)).attr("height", sub.bandwidth()).attr("rx", 3).attr("width", 0)
