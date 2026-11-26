@@ -6,6 +6,10 @@ export const pct0 = (v) => `${Math.round(v * 100)}%`;
 export const pct1 = (v) => `${(v * 100).toFixed(1)}%`;
 export const int = d3.format(",");
 export const dur = (ms) => (reducedMotion ? 0 : ms);
+// one motion vocabulary for every chart, matching --ease-out and --dur-* in tokens.css
+// and GSAP's "expo.out": quick to arrive, slow to settle
+export const EASE = d3.easeExpOut;
+export const DUR = { fast: 250, base: 600, slow: 1200 };
 
 const FEATURE_LABEL = {
   BMI: "BMI", Smoking: "Smoking", AlcoholDrinking: "Heavy drinking", Stroke: "Stroke",
@@ -73,7 +77,7 @@ export function yGrid(svg, y, x0, x1, ticks, fmt) {
 export function drawIn(path, ms = 1200, delay = 0) {
   const len = path.node().getTotalLength();
   path.attr("stroke-dasharray", `${len} ${len}`).attr("stroke-dashoffset", len)
-    .transition().delay(dur(delay)).duration(dur(ms)).ease(d3.easeCubicInOut).attr("stroke-dashoffset", 0)
+    .transition().delay(dur(delay)).duration(dur(ms)).ease(EASE).attr("stroke-dashoffset", 0)
     .on("end", () => path.attr("stroke-dasharray", null));
 }
 

@@ -50,10 +50,14 @@ export function createStage(canvas) {
   addEventListener("resize", resize);
 
   const timer = new THREE.Timer();
+  let drew = true;
   stage.loop = (fn) => renderer.setAnimationLoop((time) => {
     timer.update(time);
-    fn(Math.min(timer.getDelta(), 0.05), timer.getElapsed());
-    composer.render();
+    // fn returns false when nothing on the stage is visible (the explainers cover it): draw one
+    // last, empty frame, then stop paying for the dots and bloom until it shows again
+    const draw = fn(Math.min(timer.getDelta(), 0.05), timer.getElapsed()) !== false;
+    if (draw || drew) composer.render();
+    drew = draw;
   });
   return stage;
 }

@@ -28,7 +28,7 @@
 .fgroup ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .fgroup li {
   padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
-  opacity: 0; transform: translateY(10px); transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out), border-color 0.2s;
+  opacity: 0; transform: translateY(10px); transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out), border-color var(--dur-fast);
   transition-delay: calc(var(--i) * 40ms);
 }
 .in .fgroup li { opacity: 1; transform: none; }
@@ -42,7 +42,7 @@
 .encode td small { font-size: 12px; }
 .encode td { padding: 3px 6px; border-top: 1px solid var(--line); color: var(--ink-2); }
 .encode td.q { color: var(--ink); }
-.encode td.enc { color: var(--ink); font-weight: 600; opacity: 0; transition: opacity 0.4s; transition-delay: calc(var(--i) * 70ms); }
+.encode td.enc { color: var(--ink); font-weight: 600; opacity: 0; transition: opacity var(--dur-base) var(--ease-out); transition-delay: calc(var(--i) * 70ms); }
 .encode td.enc.target { color: var(--accent); }
 .in .encode td.enc { opacity: 1; }
 .encode td.arrow { color: var(--ink-3); width: 1.2em; }
@@ -52,12 +52,8 @@
 .thresh-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .thresh-controls label { font-size: 13px; color: var(--ink-2); }
 .thresh-controls output { font: 600 22px/1 var(--font-display); color: var(--ink); min-width: 3.2ch; display: inline-block; }
-.thresh-controls input[type="range"] { flex: 1 1 200px; accent-color: var(--accent); min-height: 24px; }
-.chip {
-  font: 500 12px var(--font-body); color: var(--ink-2); background: var(--surface); cursor: pointer;
-  border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px;
-}
-.chip:hover, .chip[aria-pressed="true"] { border-color: var(--ink-2); color: var(--ink); }
+.thresh-controls input[type="range"] { flex: 1 1 200px; accent-color: var(--ink); min-height: 24px; }
+/* .chip lives in explainers.css: one pill for chart sorters and explainer pickers */
 .chip:focus-visible, .thresh-controls input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* touch screens: chips keep their look but get a 44 px tall hit area; the slider gets room for a thumb */
 @media (pointer: coarse) {
@@ -78,3 +74,7 @@
 .sorter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 
 .chart-note { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fgroup li, .encode td.enc { transform: none; transition: none; }
+}

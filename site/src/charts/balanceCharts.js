@@ -1,6 +1,6 @@
 // Chapter 5: SMOTE + ENN on a real sample of training rows, and class counts per method.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, dur, int, once, chartWidth } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, dur, int, once, chartWidth, EASE, DUR } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 // mode "smote": synthetic points appear between their two real parents
@@ -52,12 +52,12 @@ export function smoteChart(el, ctx, { mode = "smote" } = {}) {
         synth.forEach((p, i) => {
           const [a, b] = p.parents.map((k) => originals[k]);
           links.append("line").attr("x1", x(a.x)).attr("y1", y(a.y)).attr("x2", x(a.x)).attr("y2", y(a.y)).attr("opacity", 0.5)
-            .transition().delay(i * step).duration(dur(250)).attr("x2", x(b.x)).attr("y2", y(b.y))
-            .transition().duration(dur(600)).attr("opacity", 0).remove();
+            .transition().delay(i * step).duration(dur(DUR.fast)).attr("x2", x(b.x)).attr("y2", y(b.y))
+            .transition().duration(dur(DUR.base)).attr("opacity", 0).remove();
         });
-        syn.transition().delay((p, i) => i * step + dur(200)).duration(dur(250)).attr("opacity", 0.8);
+        syn.transition().delay((p, i) => i * step + dur(200)).duration(dur(DUR.fast)).attr("opacity", 0.8);
       } else {
-        all.filter((p) => !p.kept).transition().delay(dur(300)).duration(dur(900))
+        all.filter((p) => !p.kept).transition().delay(dur(300)).duration(dur(DUR.base)).ease(EASE)
           .attr("opacity", 0.07).attr("stroke", "var(--missed)");
       }
     }),
@@ -94,8 +94,8 @@ export function balanceCompareChart(el, ctx) {
   dataTable(el, ["Method", "No rows", "Yes rows"], methods.map((d) => [d.label, int(d.counts.No), int(d.counts.Yes)]));
   return {
     enter: once(() => {
-      bars.transition().duration(dur(800)).delay((d, i) => dur(i * 50)).ease(d3.easeCubicOut).attr("width", (d) => x(d.v) - m.l);
-      labels.transition().delay(dur(900)).duration(dur(300)).style("opacity", 1);
+      bars.transition().duration(dur(DUR.base)).delay((d, i) => dur(i * 50)).ease(EASE).attr("width", (d) => x(d.v) - m.l);
+      labels.transition().delay(dur(DUR.base)).duration(dur(DUR.fast)).style("opacity", 1);
     }),
   };
 }

@@ -1,7 +1,7 @@
 // Chapters 3–4: accuracy vs. number of features, the people the first model missed,
 // and why (predicted risk scores by true class).
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, int, featureLabel, once, chartWidth } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, int, featureLabel, once, chartWidth, EASE, DUR } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 export function accuracyFeaturesChart(el, ctx) {
@@ -16,12 +16,12 @@ export function accuracyFeaturesChart(el, ctx) {
   xGrid(svg, x, H - m.b, H - m.b, [1, 5, 10, 15, 20, 22], (d) => d).select(".grid").remove();
   svg.append("text").attr("class", "label").attr("x", (m.l + W - m.r) / 2).attr("y", H - 2).attr("text-anchor", "middle")
     .text("Number of top features used");
-  const line = svg.append("path").datum(data).attr("fill", "none").attr("stroke", "var(--accent)").attr("stroke-width", 2)
+  const line = svg.append("path").datum(data).attr("fill", "none").attr("stroke", "var(--model)").attr("stroke-width", 2)
     .attr("d", d3.line().x((d) => x(d.k)).y((d) => y(d.acc)));
   // hover: crosshair + tooltip
   const cross = svg.append("g").style("display", "none");
   cross.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
-  const dot = cross.append("circle").attr("r", 5).attr("fill", "var(--accent)").attr("stroke", "var(--surface)").attr("stroke-width", 2);
+  const dot = cross.append("circle").attr("r", 5).attr("fill", "var(--model)").attr("stroke", "var(--surface)").attr("stroke-width", 2);
   svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent")
     .on("pointermove", function (e) {
       const k = Math.round(x.invert(d3.pointer(e, this)[0]));
@@ -55,7 +55,7 @@ export function missedChart(el, ctx) {
   note.textContent = `In the test set: ${int(naive.cm.tp)} caught and ${int(naive.cm.fn)} missed out of ${int(naive.cm.tp + naive.cm.fn)} people with heart disease.`;
   el.appendChild(note);
   return {
-    enter: once(() => cells.transition().duration(dur(300)).delay((i) => dur(i * 18))
+    enter: once(() => cells.transition().duration(dur(DUR.fast)).delay((i) => dur(i * 18)).ease(EASE)
       .attr("fill", (i) => (i < caught ? "var(--accent)" : "transparent"))
       .attr("stroke", (i) => (i < caught ? "none" : "var(--missed)"))
       .attr("r", (i) => (i < caught ? s / 2 - 1 : s / 2 - 2.5))),

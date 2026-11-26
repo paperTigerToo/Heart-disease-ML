@@ -22,7 +22,7 @@ main { position: relative; z-index: 3; }
   max-width: var(--col); margin: 0 0 70svh; padding: 26px 28px;
   background: rgba(10, 11, 15, 0.62); border: 1px solid var(--line); border-radius: 18px;
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  opacity: 0.45; transition: opacity 0.6s var(--ease-out);
+  opacity: 0.45; transition: opacity var(--dur-base) var(--ease-out);
 }
 .step.active { opacity: 1; }
 .step:last-child { margin-bottom: 40svh; }
@@ -35,7 +35,7 @@ main { position: relative; z-index: 3; }
 
 .formula {
   font: 500 15px/1.5 var(--font-body); color: var(--ink); padding: 10px 14px; margin: 0.4rem 0 1rem;
-  border-left: 2px solid var(--accent); background: var(--surface);
+  border-left: 2px solid var(--ink-3); background: var(--surface);
 }
 .formula .val { float: right; color: var(--ink-2); }
 
@@ -50,7 +50,7 @@ main { position: relative; z-index: 3; }
 /* labels pinned to dot formations */
 .dot-label {
   position: fixed; z-index: 2; /* under the story cards, so text always wins */ pointer-events: none; font: 500 13px/1.3 var(--font-body); color: var(--ink);
-  white-space: nowrap; opacity: 0; transition: opacity 0.4s; transform: translate(0, -100%); padding-bottom: 6px;
+  white-space: nowrap; opacity: 0; transition: opacity var(--dur-base) var(--ease-out); transform: translate(0, -100%); padding-bottom: 6px;
 }
 .dot-label.below { transform: none; padding: 6px 0 0; }
 .dot-label.on { opacity: 1; }
@@ -83,7 +83,7 @@ main { position: relative; z-index: 3; }
 /* skip link */
 .skip-link {
   position: fixed; top: 10px; left: 10px; z-index: 100; padding: 8px 14px; border-radius: 8px;
-  background: var(--ink); color: var(--bg); font-weight: 600; transform: translateY(-160%); transition: transform 0.2s;
+  background: var(--ink); color: var(--bg); font-weight: 600; transform: translateY(-160%); transition: transform var(--dur-fast) var(--ease-out);
 }
 .skip-link:focus { transform: none; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
@@ -91,7 +91,7 @@ main { position: relative; z-index: 3; }
 /* loading screen */
 .loader {
   position: fixed; inset: 0; z-index: 90; display: grid; place-content: center; justify-items: center; gap: 14px;
-  background: var(--bg); transition: opacity 0.8s var(--ease-out), visibility 0.8s;
+  background: var(--bg); transition: opacity var(--dur-base) var(--ease-out), visibility var(--dur-base);
 }
 .loader.done { opacity: 0; visibility: hidden; }
 .loader svg { width: 180px; height: 54px; }
@@ -111,13 +111,39 @@ main { position: relative; z-index: 3; }
   display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 5px 0;
   font-size: 12px; color: var(--ink-3); text-decoration: none;
 }
-.rail a span { opacity: 0; transform: translateX(6px); transition: opacity 0.25s, transform 0.25s; white-space: nowrap; }
-.rail a i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink-3); transition: background 0.3s, border-color 0.3s, transform 0.3s; }
+.rail a span { opacity: 0; transform: translateX(6px); transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); white-space: nowrap; }
+.rail a i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink-3); transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out); }
 .rail a:hover span, .rail a:focus-visible span, .rail a[aria-current="true"] span { opacity: 1; transform: none; }
 .rail a[aria-current="true"] { color: var(--ink); }
-.rail a[aria-current="true"] i { background: var(--accent); border-color: var(--accent); transform: scale(1.25); }
-.progress { position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 20; background: var(--accent); transform-origin: left; transform: scaleX(0); display: none; }
-@media (max-width: 1100px) { .rail { display: none; } .progress { display: block; } }
+.rail a[aria-current="true"] i { background: var(--ink); border-color: var(--ink); transform: scale(1.25); }
+.progress { position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 20; background: var(--ink-2); transform-origin: left; transform: scaleX(0); display: none; }
+.chapmenu { display: none; position: fixed; top: 10px; right: 12px; z-index: 21; }
+.chapmenu button {
+  min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); cursor: pointer;
+  background: rgba(10, 11, 15, 0.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font: 500 13px var(--font-body); color: var(--ink); display: inline-flex; align-items: center; gap: 8px;
+}
+.chapmenu button::after { content: ""; width: 6px; height: 6px; border: solid var(--ink-2); border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform var(--dur-fast) var(--ease-out); }
+.chapmenu button[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
+.chapmenu ol {
+  position: absolute; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; min-width: 220px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.chapmenu ol a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; font-size: 15px; color: var(--ink-2); text-decoration: none; }
+.chapmenu ol a[aria-current="true"] { color: var(--ink); background: var(--surface-2); }
+@media (max-width: 1100px) { .rail { display: none; } .progress { display: block; } .chapmenu { display: block; } }
+
+/* the five-model list at the top of "Inside the models", with a way past all of it */
+.xp-jump { margin-top: 2rem; }
+.xp-jump ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); counter-reset: m; }
+.xp-jump li { counter-increment: m; border-bottom: 1px solid var(--line); }
+.xp-jump li a {
+  display: flex; align-items: baseline; gap: 14px; min-height: 44px; padding: 12px 0; box-sizing: border-box;
+  color: var(--ink-2); text-decoration: none; transition: color var(--dur-fast), padding var(--dur-fast) var(--ease-out);
+}
+.xp-jump li a::before { content: counter(m); font: 500 12px var(--font-body); color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 1ch; }
+.xp-jump li a:hover, .xp-jump li a:focus-visible { color: var(--ink); padding-left: 6px; }
+.xp-jump .skip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 0.6rem; font-size: 14px; color: var(--ink); }
 
 /* no-WebGL fallback heart */
 #fallback { position: fixed; top: 0; right: 0; width: 55vw; height: 100vh; z-index: 0; pointer-events: none; }

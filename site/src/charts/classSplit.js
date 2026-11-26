@@ -1,8 +1,7 @@
 // One stacked bar: share of respondents answering No vs Yes.
 import * as d3 from "d3";
 import { showTip, hideTip } from "./tooltip.js";
-import { reducedMotion } from "../scroll/story.js";
-import { chartWidth } from "./util.js";
+import { chartWidth, EASE, DUR, dur } from "./util.js";
 
 export function classSplitChart(el, ctx) {
   const { No, Yes } = ctx.d.classes;
@@ -30,7 +29,7 @@ export function classSplitChart(el, ctx) {
   });
   return {
     enter() {
-      bars.transition().duration(reducedMotion ? 0 : 900).ease(d3.easeCubicOut)
+      bars.transition().duration(dur(DUR.base)).ease(EASE)
         .attr("width", (d) => Math.max(0, x(d.v) - 2));
     },
   };

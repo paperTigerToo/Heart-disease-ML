@@ -1,6 +1,6 @@
 // Chapter 6: move the cut-off and watch the confusion matrix and every metric respond.
 import * as d3 from "d3";
-import { svgIn, xGrid, int, pct1, once, dur, chartWidth } from "./util.js";
+import { svgIn, xGrid, int, pct1, once, dur, chartWidth, EASE, DUR } from "./util.js";
 
 const METRICS = [
   { key: "acc", label: "Accuracy" }, { key: "prec", label: "Precision" },
@@ -38,7 +38,7 @@ export function thresholdChart(el, ctx) {
   svg.append("g").selectAll("text").data(METRICS).join("text").attr("class", "label")
     .attr("x", m.l - 10).attr("y", (d) => y(d.key) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end").text((d) => d.label);
   const bars = svg.append("g").selectAll("rect").data(METRICS).join("rect")
-    .attr("x", m.l).attr("y", (d) => y(d.key)).attr("height", y.bandwidth()).attr("rx", 3).attr("fill", "var(--accent)").attr("width", 0);
+    .attr("x", m.l).attr("y", (d) => y(d.key)).attr("height", y.bandwidth()).attr("rx", 3).attr("fill", "var(--model)").attr("width", 0);
   const vals = svg.append("g").selectAll("text").data(METRICS).join("text").attr("class", "label")
     .attr("y", (d) => y(d.key) + y.bandwidth() / 2).attr("dy", "0.35em");
   const note = document.createElement("p");
@@ -53,9 +53,10 @@ export function thresholdChart(el, ctx) {
     out.textContent = (v / 100).toFixed(2);
     el.querySelectorAll("[data-k]").forEach((b) => (b.textContent = int(d[b.dataset.k])));
     chips.forEach((c) => c.setAttribute("aria-pressed", +c.dataset.t === v));
-    const tr = (sel) => (animate ? sel.transition().duration(dur(500)).ease(d3.easeCubicOut) : sel);
+    const tr = (sel) => (animate ? sel.transition().duration(dur(DUR.fast)).ease(EASE) : sel);
     tr(bars).attr("width", (k) => x(d[k.key]) - m.l);
     tr(vals).attr("x", (k) => x(d[k.key]) + 6).text((k) => pct1(d[k.key]));
+    el.dispatchEvent(new CustomEvent("cutoff", { bubbles: true, detail: d })); // the 3D matrix follows
   }
   input.addEventListener("input", () => render(+input.value, false));
   chips.forEach((c) => c.addEventListener("click", () => { input.value = c.dataset.t; render(+c.dataset.t, true); }));

@@ -9,6 +9,9 @@ import { median, ascending } from "d3";
 import { sampleHeartPoints } from "../three/heartShape.js";
 import { lubDub } from "../three/heart.js";
 import { C, clamp, lerp, seg, smooth, mixRgb, rng } from "./engine.js";
+import { reducedMotion } from "../scroll/story.js";
+
+const MOTION = reducedMotion ? 0 : 1; // ambient orbit, bob, swirl and pulses; scroll-driven changes stay
 
 const K_MAX = 251;
 const FOV = 34;
@@ -237,11 +240,11 @@ export function knnExplainer(stage, ex) {
 
       // camera: faces the heart, orbits once the data is out, then follows the patient,
       // pulling back as the sphere grows so it always fills about half the frame
-      orbit += dt * 0.07 * morph;
+      orbit += dt * 0.07 * morph * MOTION;
       const want = lerp(lerp(1.55, 1.7, morph), Math.max(0.55, radius * 1.6), qIn);
       frameR = frameR ? lerp(frameR, want, 1 - Math.exp(-dt * 4)) : want;
       const d = distanceFor(frameR);
-      const th = (orbit + 0.5 + p * 0.3) * morph, ph = (0.22 + 0.08 * Math.sin(t * 0.21)) * morph;
+      const th = (orbit + 0.5 + p * 0.3) * morph, ph = (0.22 + 0.08 * Math.sin(t * 0.21) * MOTION) * morph;
       const look = qPos.map((v) => v * qIn);
       camera.position.set(look[0] + d * Math.cos(ph) * Math.sin(th), look[1] + d * Math.sin(ph), look[2] + d * Math.cos(ph) * Math.cos(th));
       camera.lookAt(look[0], look[1], look[2]);
@@ -251,14 +254,14 @@ export function knnExplainer(stage, ex) {
       uniforms.uBal.value = bal;
       uniforms.uFocus.value = qIn;
       uniforms.uRadius.value = radius;
-      uniforms.uTime.value = t;
-      uniforms.uBeat.value = lubDub(t) * (1 - morph);
+      uniforms.uTime.value = t * MOTION;
+      uniforms.uBeat.value = lubDub(t) * (1 - morph) * MOTION;
       sphere.scale.setScalar(Math.max(0.001, radius));
       sphereMat.uniforms.uOpacity.value = qIn;
-      sphereMat.uniforms.uTime.value = t;
+      sphereMat.uniforms.uTime.value = t * MOTION;
       const [cr, cg, cb] = mixRgb(C.no, C.yes, smooth(clamp((share - 0.3) / 0.4)));
       sphereMat.uniforms.uColor.value.setRGB(cr / 255, cg / 255, cb / 255, THREE.SRGBColorSpace);
-      qMesh.scale.setScalar(Math.max(0.001, qIn * (frameR / 1.7) * (1 + 0.25 * Math.sin(t * 4))));
+      qMesh.scale.setScalar(Math.max(0.001, qIn * (frameR / 1.7) * (1 + 0.25 * Math.sin(t * 4) * MOTION)));
 
       // spokes, rebuilt only when the neighbor set changes
       const nb = bal < 0.5 ? nbO : nbB;

@@ -2,6 +2,9 @@
 // patient's answers travel through it as pulses of light; neurons glow when they fire.
 import { max } from "d3";
 import { C, MONO, BODY, clamp, lerp, seg, smooth, rgba, mix, sigmoid, layer, drawGlow } from "./engine.js";
+import { reducedMotion } from "../scroll/story.js";
+
+const MOTION = reducedMotion ? 0 : 1; // with reduced motion the pulses hold still along their lines
 
 export function neuralExplainer(stage, ex) {
   const M = ex.mlp, FEAT = ex.features;
@@ -91,7 +94,7 @@ export function neuralExplainer(stage, ex) {
         for (const d of flows[li]) {
           const a = nodes[li][d.a], b = nodes[li + 1][d.b];
           for (let rep = 0; rep < 2; rep++) {
-            const u = (t * 0.55 + d.ph + rep * 0.5) % 1;
+            const u = (t * 0.55 * MOTION + d.ph + rep * 0.5) % 1;
             ctx.globalAlpha = env * (0.25 + 0.75 * d.n);
             drawGlow(ctx, d.v > 0 ? C.yes : "#6aa0ea", lerp(a.x, b.x, u), lerp(a.y, b.y, u), 4 + 7 * d.n);
           }
@@ -106,9 +109,9 @@ export function neuralExplainer(stage, ex) {
         const all = [...flows[2].map((d) => [2, d]), ...flows[1].slice(0, 160).map((d) => [1, d]), ...flows[0].slice(0, 80).map((d) => [0, d])];
         for (const [li, d] of all) {
           const a = nodes[li][d.a], b = nodes[li + 1][d.b];
-          const u = 1 - ((t * 0.45 + d.ph + li * 0.33) % 1);
+          const u = 1 - ((t * 0.45 * MOTION + d.ph + li * 0.33) % 1);
           ctx.globalAlpha = back * (0.2 + 0.6 * d.n);
-          drawGlow(ctx, C.missed, lerp(a.x, b.x, u), lerp(a.y, b.y, u), 3 + 6 * d.n);
+          drawGlow(ctx, C.ink, lerp(a.x, b.x, u), lerp(a.y, b.y, u), 3 + 6 * d.n);
         }
         ctx.globalAlpha = 1;
       }
@@ -153,7 +156,7 @@ export function neuralExplainer(stage, ex) {
       ctx.strokeStyle = "rgba(255,255,255,0.15)"; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.arc(o.x, o.y, R, 0, 7); ctx.stroke();
       if (lit[3] > 0) {
-        const pv = F.p * lit[3], col = F.p > 0.5 ? C.yes : C.missed;
+        const pv = F.p * lit[3], col = !byKey[key].has_disease ? C.no : F.p > 0.5 ? C.yes : C.missed;
         ctx.strokeStyle = col; ctx.lineCap = "round";
         ctx.beginPath(); ctx.arc(o.x, o.y, R, -Math.PI / 2, -Math.PI / 2 + pv * Math.PI * 2); ctx.stroke(); ctx.lineCap = "butt";
         drawGlow(ctx, col, o.x, o.y, R * 2.2 * lit[3]);

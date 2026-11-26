@@ -3,7 +3,7 @@
 
 .xp { position: relative; }
 .xp-head { padding: 22svh var(--gutter) 8svh; max-width: 48rem; }
-.xp-kicker { font: 500 12px var(--font-mono); color: var(--accent); letter-spacing: 0.06em; margin: 0 0 0.9rem; }
+.xp-kicker { font: 500 12px var(--font-mono); color: var(--ink-3); letter-spacing: 0.06em; margin: 0 0 0.9rem; }
 .xp-head h3 { font-size: clamp(1.8rem, 3.4vw, 3rem); letter-spacing: -0.035em; line-height: 1; margin: 0; }
 .xp-head p { margin: 1rem 0 0; max-width: 40rem; }
 
@@ -25,7 +25,7 @@
 .xp-card {
   pointer-events: auto; width: var(--xp-card); padding: 22px 24px 20px; border-radius: 16px;
   background: rgba(14, 16, 22, 0.8); border: 1px solid var(--line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  opacity: 0.3; transform: translateY(10px); transition: opacity 0.5s var(--ease-out), transform 0.7s var(--ease-out);
+  opacity: 0.3; transform: translateY(10px); transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .xp-step.active .xp-card { opacity: 1; transform: none; }
 .xp-card .k { font: 500 11px var(--font-mono); color: var(--ink-3); letter-spacing: 0.06em; margin: 0 0 10px; }
@@ -47,16 +47,16 @@
 .xp-patients { right: calc(100% - var(--plot-x) - var(--plot-w)); top: calc(var(--plot-y) - 8px); display: flex; gap: 6px; pointer-events: auto; }
 .chip {
   font: 500 12px var(--font-body); color: var(--ink-2); background: rgba(14, 16, 22, 0.8); cursor: pointer;
-  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; transition: border-color 0.2s, color 0.2s;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; transition: border-color var(--dur-fast), color var(--dur-fast);
 }
 .chip:hover { color: var(--ink); border-color: var(--ink-3); }
-.chip[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+.chip[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
 
 /* KNN vote */
 .xp-vote {
   left: calc(var(--plot-x) + 10px); top: calc(var(--plot-y) + var(--plot-h) - 150px); width: 270px;
   padding: 12px 14px; border-radius: 12px; background: rgba(14, 16, 22, 0.76); border: 1px solid var(--line);
-  opacity: 0; transform: translateY(6px); transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+  opacity: 0; transform: translateY(6px); transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .xp-vote.on { opacity: 1; transform: none; }
 .ballot { display: flex; flex-wrap: wrap; gap: 3px; margin: 10px 0 8px; min-height: 9px; }
@@ -76,7 +76,7 @@
 .verdict.yes { border-color: var(--accent); color: #ffd3d4; background: rgba(229, 56, 59, 0.2); }
 
 /* tree stats */
-.xp-tree-stats { right: calc(100% - var(--plot-x) - var(--plot-w)); top: calc(var(--plot-y) - 14px); text-align: right; opacity: 0; transition: opacity 0.5s; }
+.xp-tree-stats { right: calc(100% - var(--plot-x) - var(--plot-w)); top: calc(var(--plot-y) - 14px); text-align: right; opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
 .xp-tree-stats.on { opacity: 1; }
 .xp-tree-stats .row { display: flex; gap: 22px; justify-content: flex-end; }
 

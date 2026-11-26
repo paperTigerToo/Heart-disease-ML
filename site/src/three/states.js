@@ -5,14 +5,14 @@ import { F } from "./formations.js";
 const DEFAULTS = {
   f: F.HEART, ox: 1, oy: 0, s: 1, beat: 1, loosen: 0, reveal: 0,
   missedNaive: 0, missedBest: 0, synth: 0, under: 0, yesBoost: 0,
-  quadOn: 0, quad: [1, 1, 1, 1], dim: 1,
+  quadOn: 0, quad: [1, 1, 1, 1], dim: 1, hero: 0, calm: 0,
 };
 
 // quadrant brightness order: TP, FN, FP, TN
 const LOW = 0.12;
 const CAUGHT = [3, 3, 0.14, 0.14]; // results: spotlight sick people, caught (crimson) vs missed (amber)
 const RAW = {
-  hero: { ox: 0.62, oy: 0.05, s: 1.05 },
+  hero: { hero: 1, oy: 0.05, s: 1.05 }, // beside the headline (see heart.js measure)
   topic: { s: 0.85, loosen: 0.25 },
   "data-intro": { f: F.CLOUD },
   "data-features": { f: F.CLOUD },
@@ -23,10 +23,10 @@ const RAW = {
   "first-features": { s: 0.9 },
   "twist-split": { f: F.WAFFLE, reveal: 1 },
   "twist-baseline": { f: F.WAFFLE, reveal: 1 },
-  "twist-missed": { f: F.WAFFLE, reveal: 1, missedNaive: 1 },
-  "twist-why": { f: F.WAFFLE, reveal: 1, missedNaive: 1 },
+  "twist-missed": { f: F.FOCUS, reveal: 1, missedNaive: 1 },
+  "twist-why": { f: F.FOCUS, reveal: 1, missedNaive: 1 },
   "balance-rule": { f: F.WAFFLE, reveal: 1 },
-  "balance-under": { f: F.WAFFLE, reveal: 1, under: 1 },
+  "balance-under": { f: F.UNDER, reveal: 1, under: 1 },
   "balance-smote": { f: F.BALANCED, reveal: 1, synth: 1 },
   "balance-enn": { f: F.BALANCED, reveal: 1, synth: 1 },
   "balance-weights": { f: F.WAFFLE, reveal: 1, yesBoost: 1 },
@@ -36,15 +36,17 @@ const RAW = {
   "score-recall": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, LOW, LOW] },
   "score-f1": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, 1, LOW] },
   "score-auc": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1 },
-  "score-threshold": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, dim: 0.3 }, // the explorer is a different model: let it lead
+  // the matrix follows the explorer's slider; the cleared crowd steps back so the people who move stand out
+  "score-threshold": { f: F.CONFUSION, reveal: 1, missedBest: 1, quadOn: 1, quad: [1, 1, 1, 0.35] },
   "models-intro": { s: 0.85, loosen: 0.2 },
   models: { s: 0.85, dim: 0 }, // the explainers have their own stages; the heart steps back
   "results-leaderboard": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-tradeoff": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.95 },
   "results-curves": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.9 },
   "results-importance": { reveal: 1, missedBest: 1, quadOn: 1, quad: CAUGHT, s: 0.9 },
-  takeaways: { reveal: 0.35, s: 0.9 },
-  about: { s: 0.6, oy: 0.25, dim: 0.45 },
+  // the ending: everyone you followed comes back together as one heart, beating at rest
+  takeaways: { s: 1, calm: 1 },
+  about: { s: 0.6, oy: 0.25, dim: 0.45, calm: 1 },
 };
 
 export const STATES = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, { ...DEFAULTS, ...v }]));

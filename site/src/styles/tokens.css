@@ -27,10 +27,17 @@
   --accent: #e5383b;   /* Yes / heart disease */
   --no: #3f7fd1;       /* No */
   --missed: #c98500;   /* sick people a model missed: always labeled */
+  /* crimson, blue and amber are reserved for the three data meanings above. Everything else
+     that needs emphasis (model scores, "after" marks, navigation, focus) uses the ink ramp:
+     bright ivory for the thing being measured, --ink-3 for its baseline. */
+  --model: var(--ink);
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* the only curve: d3 EASE and GSAP expo.out match it */
+  --dur-fast: 0.25s; /* feedback: hover, chips, tooltips */
+  --dur-base: 0.6s;  /* state: steps, cards, labels, chart entrances */
+  --dur-slow: 1.2s;  /* authored moments: headline reveals, the leaderboard flip */
   --gutter: clamp(16px, 5vw, 72px);
   --col: min(36rem, 42vw);
 }

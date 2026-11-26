@@ -165,7 +165,7 @@ export function boostingExplainer(stage, ex) {
       }
       // the current stump's mistakes
       if (tl.ring > 0 && vote < 1) {
-        ctx.strokeStyle = rgba(C.missed, 0.95 * tl.ring * (1 - vote));
+        ctx.strokeStyle = rgba("#ffffff", 0.95 * tl.ring * (1 - vote));
         ctx.lineWidth = 1.6;
         ctx.beginPath();
         for (let i = 0; i < n; i++) {

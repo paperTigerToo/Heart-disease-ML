@@ -10,7 +10,10 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
+a { color: var(--ink); text-decoration-color: var(--ink-3); text-underline-offset: 3px; }
+/* browser surfaces in the page's own palette */
+::selection { background: rgba(236, 235, 232, 0.22); color: var(--ink); }
+html { scrollbar-color: var(--surface-2) var(--bg); caret-color: var(--ink); }
 b, strong { color: var(--ink); font-weight: 600; }
 .num { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -31,30 +34,28 @@ b, strong { color: var(--ink); font-weight: 600; }
 @keyframes grain { 0%,100% { transform: translate(0,0); } 33% { transform: translate(-3%,2%); } 66% { transform: translate(2%,-3%); } }
 
 /* type */
-.eyebrow {
-  font: 500 12px/1 var(--font-body); letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--ink-2); display: inline-flex; align-items: center; gap: 10px; margin: 0 0 1.2rem;
-}
-.eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--accent); }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin: 0; }
-h1 { font-size: clamp(2.8rem, 7.4vw, 7rem); max-width: 11ch; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 11ch; }
 h2 { font-size: clamp(2rem, 4.2vw, 3.8rem); max-width: 15ch; }
 h3 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.8rem; }
-h1 em, h2 em, h3 em { font-style: italic; color: var(--accent); }
-p { margin: 0 0 1rem; color: var(--ink-2); }
+/* Space Grotesk has no italic, so emphasis is color, never a synthesized slant */
+h1 em, h2 em, h3 em { font-style: normal; color: var(--accent); }
+/* "predict" is a verb, not a diagnosis: crimson stays on the disease, so it gets an underline instead */
+h1 em { color: inherit; text-decoration: underline 0.06em var(--ink-3); text-underline-offset: 0.12em; text-decoration-skip-ink: auto; }
+p { margin: 0 0 1rem; color: var(--ink-2); text-wrap: pretty; }
 .lede { font-size: clamp(1rem, 1.3vw, 1.2rem); max-width: 34rem; margin-top: 1.6rem; }
 .todo {
   display: inline-block; margin: 0.4rem 0 1rem; padding: 3px 8px; border: 1px dashed var(--ink-3);
   border-radius: 6px; font-size: 12px; color: var(--ink-3);
 }
-.big-number { font: 600 clamp(4rem, 10vw, 8.5rem)/0.9 var(--font-display); letter-spacing: -0.05em; color: var(--ink); margin: 0 0 0.8rem; }
+.big-number { font: 600 clamp(4rem, 10vw, 8.5rem)/0.9 var(--font-display); letter-spacing: -0.04em; color: var(--ink); margin: 0 0 0.8rem; }
 .big-number small { font-size: 0.35em; letter-spacing: 0; color: var(--ink-2); }
 
 /* tooltip (shared by charts) */
 .tooltip {
   position: fixed; z-index: 50; pointer-events: none; padding: 8px 10px; border-radius: 8px;
   background: #1b1e27; border: 1px solid var(--line); color: var(--ink); font-size: 12px; line-height: 1.45;
-  box-shadow: 0 8px 30px rgba(0,0,0,.4); opacity: 0; transition: opacity 0.15s;
+  box-shadow: 0 8px 30px rgba(0,0,0,.4); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out);
 }
 .tooltip.on { opacity: 1; }
 

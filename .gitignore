@@ -6,3 +6,4 @@ __pycache__/
 analysis/.cache/
 .DS_Store
 analysis/export.log
+.impeccable/

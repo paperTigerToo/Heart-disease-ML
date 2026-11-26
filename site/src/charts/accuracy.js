@@ -1,8 +1,7 @@
 // Dot plot: accuracy of the first models, optionally against the always-No baseline.
 import * as d3 from "d3";
 import { showTip, hideTip } from "./tooltip.js";
-import { reducedMotion } from "../scroll/story.js";
-import { chartWidth } from "./util.js";
+import { chartWidth, EASE, DUR, dur } from "./util.js";
 
 const IDS = ["logreg-22", "rf-22", "knn-22", "adaboost", "mlp-100"];
 const pct = (v) => `${(v * 100).toFixed(1)}%`;
@@ -38,7 +37,7 @@ export function accuracyChart(el, ctx, { baseline = false } = {}) {
 
   const dots = svg.append("g").selectAll("g").data(rows).join("g")
     .attr("transform", (d) => `translate(${m.l},${y(d.id) + y.bandwidth() / 2})`).style("opacity", 0);
-  dots.append("circle").attr("r", 7).attr("fill", "var(--accent)").attr("stroke", "var(--surface)").attr("stroke-width", 2);
+  dots.append("circle").attr("r", 7).attr("fill", "var(--model)").attr("stroke", "var(--surface)").attr("stroke-width", 2);
   dots.append("text").attr("class", "label").attr("x", 14).attr("dy", "0.35em").text((d) => pct(d.acc));
   dots.append("rect").attr("x", -16).attr("y", -16).attr("width", 84).attr("height", 32).attr("fill", "transparent")
     .on("pointermove", (e, d) => showTip(e, `<b>${d.label}</b><br>Accuracy ${pct(d.acc)}<br>Caught ${Math.round(d.rec * 100)} of 100 sick people`))
@@ -49,12 +48,11 @@ export function accuracyChart(el, ctx, { baseline = false } = {}) {
     enter() {
       if (shown) return;
       shown = true;
-      const dur = reducedMotion ? 0 : 900;
-      dots.transition().duration(dur).delay((d, i) => (reducedMotion ? 0 : i * 70)).ease(d3.easeCubicOut)
+      dots.transition().duration(dur(DUR.base)).delay((d, i) => dur(i * 70)).ease(EASE)
         .style("opacity", 1).attr("transform", (d) => `translate(${x(d.acc)},${y(d.id) + y.bandwidth() / 2})`);
       if (baseline) {
-        baseG.transition().delay(reducedMotion ? 0 : 700).duration(reducedMotion ? 0 : 300).style("opacity", 1);
-        baseLine.transition().delay(reducedMotion ? 0 : 700).duration(reducedMotion ? 0 : 800).attr("y2", H - m.b);
+        baseG.transition().delay(dur(700)).duration(dur(DUR.fast)).style("opacity", 1);
+        baseLine.transition().delay(dur(700)).duration(dur(DUR.base)).ease(EASE).attr("y2", H - m.b);
       }
     },
   };

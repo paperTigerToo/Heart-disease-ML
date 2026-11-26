@@ -1,6 +1,6 @@
 // Chapter 7: leaderboard, before→after trade-off, ROC/PR curves, feature importance.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, featureLabel, once, chartWidth } from "./util.js";
+import { svgIn, legend, dataTable, xGrid, yGrid, drawIn, dur, pct1, featureLabel, once, chartWidth, EASE, DUR } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 const SORTS = [
@@ -9,8 +9,8 @@ const SORTS = [
 ];
 const kindOf = (mdl) => (mdl.id === "dummy" ? "baseline" : mdl.balancing === "none" ? "plain" : "balanced");
 const KIND = {
-  plain: { label: "No balancing", color: "var(--ink-2)", kind: "dot" },
-  balanced: { label: "Balanced (resampling, weights or threshold)", color: "var(--accent)", kind: "dot" },
+  plain: { label: "No balancing", color: "var(--ink-3)", kind: "dot" },
+  balanced: { label: "Balanced (resampling, weights or threshold)", color: "var(--model)", kind: "dot" },
   baseline: { label: "Always say No", color: "var(--ink-2)", kind: "ring" },
 };
 
@@ -43,7 +43,7 @@ export function leaderboardChart(el, ctx) {
 
   function sortBy(key, animate) {
     y.domain(models.slice().sort((a, b) => b.metrics[key] - a.metrics[key]).map((d) => d.id));
-    const tr = (sel) => (animate ? sel.transition().duration(dur(800)).ease(d3.easeCubicInOut) : sel);
+    const tr = (sel) => (animate ? sel.transition().duration(dur(DUR.slow)).ease(EASE) : sel);
     tr(rows).attr("transform", (d) => `translate(${m.l},${y(d.id) + y.bandwidth() / 2})`);
     tr(rows.select("circle")).attr("cx", (d) => x(d.metrics[key]) - m.l);
     tr(rows.select(".stem")).attr("x2", (d) => x(d.metrics[key]) - m.l);
@@ -59,7 +59,7 @@ export function leaderboardChart(el, ctx) {
   dataTable(el, ["Model", ...SORTS.map((s) => s.label)], models.map((d) => [d.label, ...SORTS.map((s) => pct1(d.metrics[s.key]))]));
   return {
     // the punchline: start sorted by accuracy, then flip to recall
-    enter: once(() => setTimeout(() => sortBy("rec", true), dur(1200))),
+    enter: once(() => setTimeout(() => sortBy("rec", true), dur(900))), // a beat to read the accuracy order first
   };
 }
 
@@ -73,7 +73,7 @@ export function tradeoffChart(el, ctx) {
     { id: "logreg-smoteenn", before: "logreg-sample", label: "SMOTEENN" },
     { id: "logreg-threshold", before: "logreg-22", label: `Threshold ${ctx.t.chosen_threshold.toFixed(2)}` },
   ];
-  legend(el, [{ label: "Before (no balancing)", color: "var(--ink-2)", kind: "ring" }, { label: "After", color: "var(--accent)" }]);
+  legend(el, [{ label: "Before (no balancing)", color: "var(--ink-3)", kind: "ring" }, { label: "After", color: "var(--model)" }]);
   const panels = [{ key: "acc", title: "Accuracy" }, { key: "rec", title: "Recall" }];
   const { W, narrow } = chartWidth(el);
   const m = { t: 22, b: 24, l: 108 }, rowH = 32, gapP = 44;
@@ -96,8 +96,8 @@ export function tradeoffChart(el, ctx) {
     const g = pg.append("g").selectAll("g").data(rows).join("g").attr("transform", (r) => `translate(0,${y(r.id) + y.bandwidth() / 2})`);
     const b = (r) => M[r.before].metrics[p.key], a = (r) => M[r.id].metrics[p.key];
     const line = g.append("line").attr("x1", (r) => x(b(r))).attr("x2", (r) => x(b(r))).attr("stroke", "var(--ink-3)").attr("stroke-width", 2);
-    g.append("circle").attr("cx", (r) => x(b(r))).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--ink-2)").attr("stroke-width", 2);
-    const dot = g.append("circle").attr("cx", (r) => x(b(r))).attr("r", 5.5).attr("fill", "var(--accent)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
+    g.append("circle").attr("cx", (r) => x(b(r))).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--ink-3)").attr("stroke-width", 2);
+    const dot = g.append("circle").attr("cx", (r) => x(b(r))).attr("r", 5.5).attr("fill", "var(--model)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
       .on("pointermove", (e, r) => showTip(e, `<b>${r.label}</b><br>${p.title}: ${pct1(b(r))} → ${pct1(a(r))}`)).on("pointerleave", hideTip);
     after.push({ line, dot, x, a });
   });
@@ -105,8 +105,8 @@ export function tradeoffChart(el, ctx) {
     rows.map((r) => [r.label, pct1(M[r.before].metrics.acc), pct1(M[r.id].metrics.acc), pct1(M[r.before].metrics.rec), pct1(M[r.id].metrics.rec)]));
   return {
     enter: once(() => after.forEach(({ line, dot, x, a }) => {
-      line.transition().duration(dur(900)).delay((r, i) => dur(i * 80)).attr("x2", (r) => x(a(r)));
-      dot.transition().duration(dur(900)).delay((r, i) => dur(i * 80)).attr("cx", (r) => x(a(r)));
+      line.transition().duration(dur(DUR.base)).delay((r, i) => dur(i * 80)).ease(EASE).attr("x2", (r) => x(a(r)));
+      dot.transition().duration(dur(DUR.base)).delay((r, i) => dur(i * 80)).ease(EASE).attr("cx", (r) => x(a(r)));
     })),
   };
 }
@@ -163,7 +163,7 @@ export function importanceChart(el, ctx) {
   const before = new Map(ctx.n.importance.map((d) => [d.feature, d.importance]));
   const after = new Map(ctx.r.importance_after_smoteenn.map((d) => [d.feature, d.importance]));
   const top = [...before.keys()].sort((a, b) => Math.max(after.get(b), before.get(b)) - Math.max(after.get(a), before.get(a))).slice(0, 10);
-  legend(el, [{ label: "Before (original data)", color: "var(--ink-2)", kind: "ring" }, { label: "After SMOTEENN", color: "var(--accent)" }]);
+  legend(el, [{ label: "Before (original data)", color: "var(--ink-3)", kind: "ring" }, { label: "After SMOTEENN", color: "var(--model)" }]);
   const { W, narrow } = chartWidth(el);
   const rowH = 24, m = { t: 6, r: 20, b: 26, l: 170 };
   const H = m.t + m.b + rowH * top.length;
@@ -176,14 +176,14 @@ export function importanceChart(el, ctx) {
     .attr("x", m.l - 12).attr("y", (f) => y(f) + y.bandwidth() / 2).attr("dy", "0.35em").attr("text-anchor", "end").text(featureLabel);
   const g = svg.append("g").selectAll("g").data(top).join("g").attr("transform", (f) => `translate(0,${y(f) + y.bandwidth() / 2})`);
   const line = g.append("line").attr("x1", (f) => x(before.get(f))).attr("x2", (f) => x(before.get(f))).attr("stroke", "var(--ink-3)").attr("stroke-width", 2);
-  g.append("circle").attr("cx", (f) => x(before.get(f))).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--ink-2)").attr("stroke-width", 2);
-  const dot = g.append("circle").attr("cx", (f) => x(before.get(f))).attr("r", 5.5).attr("fill", "var(--accent)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
+  g.append("circle").attr("cx", (f) => x(before.get(f))).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--ink-3)").attr("stroke-width", 2);
+  const dot = g.append("circle").attr("cx", (f) => x(before.get(f))).attr("r", 5.5).attr("fill", "var(--model)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
     .on("pointermove", (e, f) => showTip(e, `<b>${featureLabel(f)}</b><br>Before ${before.get(f).toFixed(3)}<br>After ${after.get(f).toFixed(3)}`)).on("pointerleave", hideTip);
   dataTable(el, ["Feature", "Before", "After SMOTEENN"], top.map((f) => [featureLabel(f), before.get(f).toFixed(3), after.get(f).toFixed(3)]));
   return {
     enter: once(() => {
-      line.transition().duration(dur(900)).delay((f, i) => dur(i * 50)).attr("x2", (f) => x(after.get(f)));
-      dot.transition().duration(dur(900)).delay((f, i) => dur(i * 50)).attr("cx", (f) => x(after.get(f)));
+      line.transition().duration(dur(DUR.base)).delay((f, i) => dur(i * 50)).ease(EASE).attr("x2", (f) => x(after.get(f)));
+      dot.transition().duration(dur(DUR.base)).delay((f, i) => dur(i * 50)).ease(EASE).attr("cx", (f) => x(after.get(f)));
     }),
   };
 }

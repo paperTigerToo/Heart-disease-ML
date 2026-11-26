@@ -1,6 +1,6 @@
 // Chapter 2: the survey questions, heart-disease rates, and how answers become numbers.
 import * as d3 from "d3";
-import { svgIn, legend, dataTable, yGrid, dur, pct1, int, featureLabel, once, chartWidth } from "./util.js";
+import { svgIn, legend, dataTable, yGrid, dur, pct1, int, featureLabel, once, chartWidth, EASE, DUR } from "./util.js";
 import { showTip, hideTip } from "./tooltip.js";
 
 // Feature cards, grouped by kind of question
@@ -60,9 +60,9 @@ export function ratesChart(el, ctx) {
     panels.flatMap((p) => p.data.map((d) => [d.value, int(d.n), int(d.yes), pct1(d.rate)])));
   return {
     enter: once(() => bars.forEach(({ b, y, lab }) => {
-      b.transition().duration(dur(800)).delay((d, i) => dur(i * 40)).ease(d3.easeCubicOut)
+      b.transition().duration(dur(DUR.base)).delay((d, i) => dur(i * 40)).ease(EASE)
         .attr("y", (d) => y(d.rate)).attr("height", (d) => y(0) - y(d.rate));
-      lab.transition().delay(dur(900)).duration(dur(300)).style("opacity", 1);
+      lab.transition().delay(dur(DUR.base)).duration(dur(DUR.fast)).style("opacity", 1);
     })),
   };
 }

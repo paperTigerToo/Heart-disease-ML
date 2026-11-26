@@ -16,9 +16,12 @@ import { drawFallbackHeart } from "./three/fallback.js";
 if (new URLSearchParams(location.search).has("debug")) import("./debug.js");
 
 const loader = document.getElementById("loader");
+let loaderGone;
+const loaderDone = new Promise((r) => (loaderGone = r));
 const hideLoader = () => {
   loader.classList.add("done");
   loader.setAttribute("aria-busy", "false");
+  loaderGone();
 };
 
 async function main() {
@@ -26,19 +29,18 @@ async function main() {
   const chartsModule = import("./charts/registry.js");
   const ctx = await loadData();
   bindAll(ctx);
-  initReveals();
+  initReveals(loaderDone); // the headline rises once the loader has lifted, not underneath it
 
   const story = initStory();
   initNav(story.scrollTo);
 
   const charts = new Map();
   story.onStop((name, stepEl) => {
-    stepEl.querySelectorAll(".chart-card[data-chart]").forEach((el) => charts.get(el)?.enter());
     const counter = stepEl.querySelector("[data-count]");
     if (counter && !counter.dataset.done) {
       counter.dataset.done = "1";
       const to = get(ctx, counter.dataset.count);
-      d3.select(counter).transition().duration(reducedMotion ? 0 : 1400).ease(d3.easeCubicOut)
+      d3.select(counter).transition().duration(reducedMotion ? 0 : 1200).ease(d3.easeExpOut)
         .tween("text", () => (t) => (counter.innerHTML = `${(to * 100 * t).toFixed(1)}<small>%</small>`));
     }
   });
@@ -48,6 +50,9 @@ async function main() {
   if (stage) {
     const heart = createHeart(stage, ctx);
     const labels = createLabels(stage, heart, ctx);
+    // the threshold explorer drives the 3D confusion matrix while its step is current
+    document.addEventListener("cutoff", (e) => heart.setCutoff(e.detail));
+    story.onStop((name) => heart.setLive(name === "score-threshold"));
     const drag = initDrag();
     let first = true;
     setTimeout(hideLoader, 2500); // background tabs pause animation frames; never strand the loader
@@ -61,6 +66,7 @@ async function main() {
       stage.camera.position.y += (-drag.my * 0.12 * k - stage.camera.position.y) * 0.05;
       stage.camera.lookAt(0, 0, 0);
       if (first) { first = false; requestAnimationFrame(hideLoader); }
+      return heart.visible;
     });
   } else {
     document.documentElement.classList.add("no-webgl");
@@ -81,8 +87,14 @@ async function main() {
       console.error(`chart "${el.dataset.chart}" failed`, err);
     }
   });
-  // a step may already be current (e.g. after a reload mid-page)
-  document.querySelectorAll("[data-stop].active .chart-card[data-chart]").forEach((el) => charts.get(el)?.enter());
+  // each chart animates in once its card is well inside the screen (top past 65% of the height),
+  // so the motion is seen rather than played below the fold; this also covers a reload mid-page
+  const seen = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    seen.unobserve(e.target);
+    charts.get(e.target)?.enter();
+  }), { rootMargin: "0px 0px -35% 0px" });
+  charts.forEach((_, el) => seen.observe(el));
   story.refresh();
 
   // "Inside the models": its own chunk and data file, fetched once the rest is ready

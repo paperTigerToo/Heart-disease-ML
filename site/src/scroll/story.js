@@ -76,20 +76,23 @@ export function initStory() {
   };
 }
 
-export async function initReveals() {
+export async function initReveals(ready) {
   if (reducedMotion) return;
   await document.fonts?.ready;
   document.querySelectorAll(".reveal-now").forEach((el, i) => {
-    SplitText.create(el, { type: "lines", mask: "lines", autoSplit: true, onSplit: (self) =>
-      gsap.from(self.lines, { yPercent: 110, opacity: 0, duration: 1.3, ease: "expo.out", stagger: 0.09, delay: 0.3 + i * 0.25 }) });
+    SplitText.create(el, { type: "lines", mask: "lines", autoSplit: true, onSplit: (self) => {
+      const tween = gsap.from(self.lines, { yPercent: 110, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.09, delay: 0.15 + i * 0.2, paused: true });
+      ready.then(() => tween.play());
+      return tween;
+    } });
   });
   document.querySelectorAll(".reveal").forEach((el) => {
     SplitText.create(el, { type: "lines", mask: "lines", autoSplit: true, onSplit: (self) =>
-      gsap.from(self.lines, { yPercent: 110, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.08,
+      gsap.from(self.lines, { yPercent: 110, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.08,
         scrollTrigger: { trigger: el, start: "top 82%", toggleActions: "play none none reverse" } }) });
   });
   gsap.utils.toArray(".fact").forEach((el, i) => gsap.from(el, {
-    opacity: 0, y: 24, duration: 0.9, delay: i * 0.12, ease: "expo.out",
+    opacity: 0, y: 24, duration: 0.6, delay: i * 0.12, ease: "expo.out",
     scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse" },
   }));
 }

@@ -166,9 +166,9 @@ export function logisticExplainer(stage, ex) {
       // the cut-off
       if (cut > 0) {
         ctx.globalAlpha = cut;
-        ctx.strokeStyle = C.missed; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5;
+        ctx.strokeStyle = C.ink; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(box.x, yp(thr)); ctx.lineTo(box.x + box.w, yp(thr)); ctx.stroke(); ctx.setLineDash([]);
-        ctx.font = MONO; ctx.fillStyle = C.missed; ctx.textAlign = "left";
+        ctx.font = MONO; ctx.fillStyle = C.ink; ctx.textAlign = "left";
         ctx.fillText(`cut-off ${thr.toFixed(2)}`, box.x + 8, yp(thr) - 10);
         ctx.globalAlpha = 1;
       }
@@ -182,14 +182,14 @@ export function logisticExplainer(stage, ex) {
         if (drop >= 1) { ctx.beginPath(); ctx.moveTo(px, yCurve); ctx.lineTo(box.x, yCurve); ctx.stroke(); }
         ctx.setLineDash([]);
         const flagged = pz > thr;
-        drawGlow(ctx, cut > 0 ? (flagged ? C.yes : C.missed) : "#ffffff", px, y, 24);
+        drawGlow(ctx, cut > 0 ? (!e.has_disease ? C.no : flagged ? C.yes : C.missed) : "#ffffff", px, y, 24);
         ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(px, y, 4.5, 0, 7); ctx.fill();
         if (drop >= 1) {
           ctx.font = "600 13px ui-monospace, SFMono-Regular, Consolas, monospace"; ctx.fillStyle = C.ink; ctx.textAlign = "left";
           ctx.fillText(`p = ${pz.toFixed(2)}`, px + 12, y - 12);
           if (cut > 0.5) {
             const verdict = flagged ? (e.has_disease ? "flagged · caught" : "flagged · false alarm") : (e.has_disease ? "cleared · missed" : "cleared · correct");
-            pill(ctx, px + 92, y + 14, verdict, { color: flagged ? "#ffd3d4" : e.has_disease ? "#ffd27a" : "#cfe0ff", alpha: ctx.globalAlpha });
+            pill(ctx, px + 92, y + 14, verdict, { color: !e.has_disease ? "#cfe0ff" : flagged ? "#ffd3d4" : "#ffd27a", alpha: ctx.globalAlpha });
           }
         }
         ctx.globalAlpha = 1;
