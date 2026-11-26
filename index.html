@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Predicting Heart Disease</title>
+  <!-- the headline face: fetch it alongside the CSS instead of after it, so the hero never reflows late -->
+  <link rel="preload" href="./assets/space-grotesk-600-BhVC5gAc.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="description" content="A machine-learning case study: why a 91% accurate heart-disease model was almost useless, and how rebalancing the data and choosing the right metrics fixed it.">
+  <script type="module" crossorigin src="./assets/index-BzkuOqSm.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/d3-BqXdKAsC.js">
+  <link rel="modulepreload" crossorigin href="./assets/motion-BnQL80Kz.js">
+  <link rel="modulepreload" crossorigin href="./assets/three-DZcxDrRw.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-1lMMSXlj.css">
+</head>
+<body>
+  <a class="skip-link" href="#topic">Skip to the story</a>
+  <div class="loader" id="loader" role="status" aria-live="polite" aria-busy="true">
+    <svg viewBox="0 0 200 60" aria-hidden="true"><path d="M0 34 H60 l8 10 l10 -40 l10 48 l8 -18 H200"/></svg>
+    <p id="loader-text">Loading 319,795 survey responses…</p>
+  </div>
+  <nav class="rail" id="rail" aria-label="Chapters"></nav>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="chapmenu" id="chapmenu">
+    <button type="button" aria-expanded="false" aria-controls="chapmenu-list"><span class="lbl">Chapters</span></button>
+    <ol id="chapmenu-list" hidden></ol>
+  </div>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div id="dot-labels" aria-hidden="true"></div>
+
+  <main>
+    <!-- 0 · Hero -->
+    <section class="hero" id="hero" data-stop="hero">
+      <h1 class="reveal-now">Can a health survey <em>predict</em> heart disease?</h1>
+      <p class="lede reveal-now"><span data-bind="d.rows" data-fmt="int"></span> Americans answered a CDC health survey. I trained models to spot who had heart disease, and learned why a 91% accurate model can be almost useless.</p>
+      <div class="scroll-cue"><span></span>Scroll</div>
+      <svg class="ecg" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 40 H220 l10 -6 l10 6 H300 l8 12 l12 -50 l12 58 l10 -20 H520 l14 -8 l14 8 H760 l8 12 l12 -50 l12 58 l10 -20 H980 l12 -6 l12 6 H1200"/>
+      </svg>
+    </section>
+
+    <!-- 1 · The question -->
+    <section class="chapter" id="topic" data-name="The question">
+      <div class="step plain" data-stop="topic">
+        <h2 class="reveal">Heart disease is the leading cause of death in the U.S.</h2>
+        <span class="todo">Draft: add a cited CDC statistic here</span>
+        <p class="lede">If a few everyday answers (age, sleep, smoking, how you rate your own health) could flag people at risk, they could be nudged toward screening sooner. So I tried.</p>
+      </div>
+    </section>
+
+    <!-- 2 · The data -->
+    <section class="chapter" id="data" data-name="The data">
+      <div class="chapter-head">
+        <h2 class="reveal">319,795 people, 17 questions, one answer to predict.</h2>
+      </div>
+      <div class="step" data-stop="data-intro">
+        <h3>Every dot is about 10 people</h3>
+        <p>The CDC's Behavioral Risk Factor Surveillance System (BRFSS) interviews adults across the U.S. every year. I used a cleaned version of the 2020 survey, published on Kaggle by Kamil Pytlak.</p>
+        <div class="facts">
+          <div class="fact"><b class="num" data-bind="d.rows" data-fmt="int"></b><small>respondents</small></div>
+          <div class="fact"><b class="num">17</b><small>health questions</small></div>
+          <div class="fact"><b class="num">1</b><small>target: heart disease, yes / no</small></div>
+        </div>
+      </div>
+      <div class="step" data-stop="data-features">
+        <h3>Four kinds of questions</h3>
+        <p><b>Demographics</b> (sex, age group, race), <b>conditions</b> (stroke, diabetes, asthma, kidney disease, skin cancer), <b>behaviors</b> (smoking, heavy drinking, exercise, sleep) and <b>health status</b> (BMI, self-rated health, days of poor physical or mental health, difficulty walking).</p>
+        <div class="chart-card" data-chart="features">
+          <h4>The 17 survey questions</h4>
+          <p class="sub">The survey's wording is under each one</p>
+        </div>
+      </div>
+      <div class="step" data-stop="data-rates">
+        <h3>Some answers matter a lot</h3>
+        <p>Heart disease climbs steeply with age, and people who rate their health as "poor" report it far more often than people who say "excellent".</p>
+        <div class="chart-card" data-chart="rates">
+          <h4>Share of respondents with heart disease</h4>
+          <p class="sub">All 319,795 respondents</p>
+        </div>
+      </div>
+      <div class="step" data-stop="data-encoding">
+        <h3>Turning answers into numbers</h3>
+        <p>Models only read numbers. Yes/no answers became 1/0, the 13 age bands became 0–12, general health became 0 (poor) to 4 (excellent), and race became six yes/no columns. That's <b>22 inputs</b> per person. BMI, sleep and the two health-day counts were also rescaled so no single input dominates.</p>
+        <div class="chart-card" data-chart="encoding">
+          <h4>One real respondent, before and after encoding</h4>
+          <p class="sub">The first row of the dataset</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · First attempt -->
+    <section class="chapter" id="first" data-name="First attempt">
+      <div class="chapter-head">
+        <h2 class="reveal">Train, test, celebrate?</h2>
+      </div>
+      <div class="step" data-stop="first-models">
+        <h3>Five kinds of models</h3>
+        <p>I trained logistic regression, a random forest, k-nearest neighbors, AdaBoost and a small neural network on 75% of the people, then tested them on the <b data-bind="meta.test_rows" data-fmt="int"></b> they had never seen.</p>
+      </div>
+      <div class="step" data-stop="first-accuracy">
+        <div class="big-number num" data-count="m.logreg-22.metrics.acc">0%</div>
+        <h3>My first model was <em data-bind="m.logreg-22.metrics.acc" data-fmt="pct1"></em> accurate.</h3>
+        <p>And it wasn't a fluke: every model landed around 91%.</p>
+        <div class="chart-card" data-chart="accuracy-first">
+          <h4>Accuracy on <span data-bind="meta.test_rows" data-fmt="int"></span> held-out people</h4>
+          <p class="sub">All 22 inputs, default settings</p>
+        </div>
+      </div>
+      <div class="step" data-stop="first-features">
+        <h3>More inputs didn't help</h3>
+        <p>I ranked the inputs by random-forest importance and added them one at a time. The best score came from a single input, where the forest mostly just answers No. Every richer model scored lower. That should have been my first clue.</p>
+        <div class="chart-card" data-chart="accuracy-vs-features">
+          <h4>Accuracy as features are added</h4>
+          <p class="sub">Random forest, adding the most important feature each time</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · The twist -->
+    <section class="chapter" id="twist" data-name="Back to the data">
+      <div class="chapter-head">
+        <h2 class="reveal">Then I looked at who said <em>yes</em>.</h2>
+      </div>
+      <div class="step" data-stop="twist-split">
+        <h3><span data-bind="d.no_share" data-fmt="pct1"></span> of people answered No.</h3>
+        <p>Only <b data-bind="d.classes.Yes" data-fmt="int"></b> of <span data-bind="d.rows" data-fmt="int"></span> respondents (about 1 in 12) reported heart disease. The data is heavily lopsided.</p>
+        <div class="chart-card" data-chart="class-split">
+          <h4>Who reported heart disease?</h4>
+          <p class="sub">All survey respondents</p>
+        </div>
+      </div>
+      <div class="step" data-stop="twist-baseline">
+        <h3>Always guessing No scores <em data-bind="n.baseline_accuracy" data-fmt="pct1"></em> too.</h3>
+        <p>A "model" that never flags anyone is as accurate as mine. My models were barely beating doing nothing, and some did worse.</p>
+        <div class="chart-card" data-chart="accuracy-baseline">
+          <h4>Accuracy vs. always saying No</h4>
+          <p class="sub">The dashed line is the do-nothing baseline</p>
+        </div>
+      </div>
+      <div class="step" data-stop="twist-missed">
+        <h3>It caught only <em><span data-bind="m.logreg-22.metrics.rec" data-fmt="per100"></span> of every 100</em> sick people.</h3>
+        <p>Of the <b data-bind="meta.test_classes.Yes" data-fmt="int"></b> test patients who had heart disease, my 91.6%-accurate model flagged just <b data-bind="m.logreg-22.cm.tp" data-fmt="int"></b>. The amber dots are everyone it missed.</p>
+        <div class="chart-card" data-chart="missed">
+          <h4>Out of every 100 people with heart disease</h4>
+          <p class="sub">Logistic regression, default 0.5 cut-off</p>
+        </div>
+      </div>
+      <div class="step" data-stop="twist-why">
+        <h3>Why it happens</h3>
+        <p>A model learns by minimizing its total mistakes. When 91% of examples say No, the cheapest strategy is to lean hard toward No. Most sick people get scores below the 0.5 cut-off, so they're never flagged.</p>
+        <div class="chart-card" data-chart="probabilities">
+          <h4>Predicted risk scores by true answer</h4>
+          <p class="sub">Share of each group per score band (square-root scale)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · Making it even -->
+    <section class="chapter" id="balance" data-name="Making it even">
+      <div class="chapter-head">
+        <h2 class="reveal">If the data is lopsided, level it.</h2>
+      </div>
+      <div class="step" data-stop="balance-rule">
+        <h3>Rule one: only touch the training data</h3>
+        <p>Every trick below changes what the model <em>learns from</em>. The test set keeps its real 91/9 split, because that's the world the model will face. Balancing the test set too would make the scores look better than reality.</p>
+      </div>
+      <div class="step" data-stop="balance-under">
+        <h3>Undersampling: throw away No's</h3>
+        <p>Randomly drop "No" people until both groups are the same size. Simple and fast, but it discards about 90% of the data: <b data-bind="r.methods.0.counts.No" data-fmt="int"></b> No's shrink to <b data-bind="r.methods.2.counts.No" data-fmt="int"></b>.</p>
+      </div>
+      <div class="step" data-stop="balance-smote">
+        <h3>SMOTE: invent realistic Yes's</h3>
+        <p>SMOTE picks a real heart-disease patient, finds a similar one nearby, and creates a <b>synthetic</b> person somewhere on the line between them. Repeat until the groups are even. The hollow dots are synthetic.</p>
+        <div class="chart-card" data-chart="smote">
+          <h4>SMOTE on real training rows</h4>
+          <p class="sub">Each synthetic point is born on the line between two real neighbors</p>
+        </div>
+      </div>
+      <div class="step" data-stop="balance-enn">
+        <h3>SMOTEENN: then clean the border</h3>
+        <p>Edited Nearest Neighbours (ENN) removes points whose neighbors mostly disagree with them, clearing the noisy overlap between the groups. SMOTE + ENN is what my notebook used.</p>
+        <div class="chart-card" data-chart="smote-enn">
+          <h4>ENN cleanup on the same sample</h4>
+          <p class="sub">Faded points are the ones ENN removes</p>
+        </div>
+      </div>
+      <div class="step" data-stop="balance-weights">
+        <h3>Or change the rules, not the data</h3>
+        <p><b>Class weights</b> make each Yes count about <b data-bind="r.weight_ratio" data-fmt="x1"></b>× more in training. <b>Threshold tuning</b> keeps the model as-is but lowers the cut-off for flagging someone, chosen with cross-validation on training data only.</p>
+        <div class="chart-card" data-chart="balance-compare">
+          <h4>Training rows per class, by method</h4>
+          <p class="sub">The 50% training sample every method starts from</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · Keeping score -->
+    <section class="chapter" id="scoring" data-name="Keeping score">
+      <div class="chapter-head">
+        <h2 class="reveal">Accuracy was the wrong scoreboard.</h2>
+      </div>
+      <div class="step" data-stop="score-matrix">
+        <h3>Four possible outcomes</h3>
+        <p>Every prediction is one of four things. Here they are for logistic regression trained on SMOTEENN data: <b>true positives</b> (sick, flagged), <b>false negatives</b> (sick, missed), <b>false positives</b> (healthy, flagged) and <b>true negatives</b> (healthy, cleared).</p>
+      </div>
+      <div class="step" data-stop="score-accuracy">
+        <h3>Accuracy</h3>
+        <div class="formula">(TP + TN) ÷ everyone <span class="val" data-bind="m.logreg-smoteenn.metrics.acc" data-fmt="pct1"></span></div>
+        <p>Dominated by the huge true-negative block. With 91% No's, accuracy mostly measures how well you clear healthy people. Fine when classes are balanced and mistakes cost the same; misleading here.</p>
+      </div>
+      <div class="step" data-stop="score-precision">
+        <h3>Precision</h3>
+        <div class="formula">TP ÷ (TP + FP) <span class="val" data-bind="m.logreg-smoteenn.metrics.prec" data-fmt="pct1"></span></div>
+        <p>"When the model flags someone, how often is it right?" Low precision means many false alarms, which cost follow-up tests and worry.</p>
+      </div>
+      <div class="step" data-stop="score-recall">
+        <h3>Recall</h3>
+        <div class="formula">TP ÷ (TP + FN) <span class="val" data-bind="m.logreg-smoteenn.metrics.rec" data-fmt="pct1"></span></div>
+        <p>"Of the people who are sick, how many did we catch?" For screening this matters most: a missed case goes home untreated. My first model scored <b data-bind="m.logreg-22.metrics.rec" data-fmt="pct1"></b>.</p>
+      </div>
+      <div class="step" data-stop="score-f1">
+        <h3>F1 score</h3>
+        <div class="formula">2 · precision · recall ÷ (precision + recall) <span class="val" data-bind="m.logreg-smoteenn.metrics.f1" data-fmt="dec2"></span></div>
+        <p>The harmonic mean punishes a model that games one side. It ignores true negatives entirely, so the 91% majority can't inflate it. The always-No model scores 0.</p>
+      </div>
+      <div class="step" data-stop="score-auc">
+        <h3>ROC-AUC, PR-AUC and Cohen's κ</h3>
+        <p><b>ROC-AUC</b> asks how well the model <em>ranks</em> sick above healthy at every cut-off, but it looks rosy under imbalance. <b>PR-AUC</b> is stricter: its do-nothing baseline is the <span data-bind="d.positive_rate" data-fmt="pct1"></span> positive rate. <b>Cohen's κ</b> measures agreement beyond chance; always-No gets exactly 0.</p>
+      </div>
+      <div class="step" data-stop="score-threshold">
+        <h3>Try it: move the cut-off</h3>
+        <p>Lower the threshold and you catch more sick people but raise more false alarms. Cross-validation picked <b data-bind="t.chosen_threshold" data-fmt="dec2"></b> for the best F1. As you drag, the dots move between caught and missed.</p>
+        <div class="chart-card" data-chart="threshold">
+          <h4>Threshold explorer</h4>
+          <p class="sub">Logistic regression, all 22 features</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · Inside the models (animations in src/explainers, data from analysis/export_explainers.py) -->
+    <section class="chapter models-head" id="models" data-name="Inside the models">
+      <div class="step plain" data-stop="models-intro">
+        <h2 class="reveal">Five models, five ways of thinking.</h2>
+        <p class="lede">Every model turns a person's 22 answers into a verdict, but each one gets there differently. Here's what each actually does, on real people from the data, using the real trained models.</p>
+        <nav class="xp-jump" aria-label="The five models">
+          <ol>
+            <li><a href="#xp-logistic">Logistic regression</a></li>
+            <li><a href="#xp-tree">Random forest</a></li>
+            <li><a href="#xp-knn">k-nearest neighbors</a></li>
+            <li><a href="#xp-boosting">AdaBoost</a></li>
+            <li><a href="#xp-neural">Neural network</a></li>
+          </ol>
+          <a class="skip" href="#results">Skip to the results <span aria-hidden="true">↓</span></a>
+        </nav>
+      </div>
+    </section>
+
+    <div class="xp-chapter" data-stop="models">
+      <section class="xp" id="xp-logistic" aria-labelledby="xp-logistic-h">
+        <header class="xp-head">
+          <p class="xp-kicker">Model 1 of 5</p>
+          <h3 id="xp-logistic-h">Logistic regression weighs the evidence</h3>
+          <p>A real test-set patient, scored by my real model. Switch patients to compare.</p>
+        </header>
+        <div class="xp-scrolly">
+          <div class="xp-stage">
+            <div class="xp-hud xp-patients" role="group" aria-label="Choose a patient">
+              <button class="chip" data-p="caught" aria-pressed="false">Caught</button>
+              <button class="chip" data-p="borderline" aria-pressed="true">Borderline</button>
+              <button class="chip" data-p="healthy" aria-pressed="false">Healthy</button>
+            </div>
+          </div>
+          <div class="xp-steps">
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Start from an average person</h4>
+              <p>The model's starting point is the score of a perfectly average respondent: a log-odds of about −3.2, or a 4% chance of heart disease.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Each answer nudges the score</h4>
+              <p>Each answer differs from average by some amount, and the model multiplies that by a learned weight. Poor health, age and difficulty walking push right (riskier); being younger or healthier than average pushes left.</p>
+              <div class="formula">z = b + w<sub>1</sub>x<sub>1</sub> + w<sub>2</sub>x<sub>2</sub> + … + w<sub>22</sub>x<sub>22</sub></div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Squash it into a probability</h4>
+              <p>The total <i>z</i> can be any number. The sigmoid bends it into a probability between 0 and 1. That S-shape is where "logistic" comes from.</p>
+              <div class="formula">p = σ(z) = 1 ⁄ (1 + e<sup>−z</sup>)</div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>The cut-off decides</h4>
+              <p>At the default cut-off of 0.5, this patient, who really had heart disease, is <b class="m">missed</b>. The tuned cut-off of <span data-bind="t.chosen_threshold" data-fmt="dec2"></span> <b class="y">flags</b> them.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Everyone at once</h4>
+              <p>1,200 test-set people dropped onto the curve, 91% of them healthy as in real life. Most <span class="y">sick</span> people land below 0.5, which is why my first model caught only <b><span data-bind="m.logreg-22.metrics.rec" data-fmt="per100"></span> of every 100</b>.</p>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="xp" id="xp-tree" aria-labelledby="xp-tree-h">
+        <header class="xp-head">
+          <p class="xp-kicker">Model 2 of 5</p>
+          <h3 id="xp-tree-h">A random forest is a crowd of decision trees</h3>
+          <p>My forest has 50 trees voting. Here's what a single tree does: the real three-level tree scikit-learn grew from 240,000 people.</p>
+        </header>
+        <div class="xp-scrolly">
+          <div class="xp-stage">
+            <div class="xp-hud xp-tree-stats">
+              <div class="row"><span><span class="lbl">caught</span><br><span class="big" data-tree="rec"></span></span>
+                <span><span class="lbl">precision</span><br><span class="big" data-tree="prec"></span></span></div>
+              <div class="lbl" style="margin-top:6px">this tree on all <span data-bind="meta.test_rows" data-fmt="int"></span> test rows</div>
+            </div>
+          </div>
+          <div class="xp-steps">
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Twenty questions, three deep</h4>
+              <p>A tree asks the yes/no question that best separates sick from healthy, then asks again inside each answer. This one starts with age, then general health and stroke history. It was trained with class weights, so a sick person counts about ten times as much as a healthy one.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Follow one patient</h4>
+              <p>A 70–74-year-old in poor health. 55 or older? <b>Yes.</b> Very good or excellent health? <b>No.</b> Fair or poor health? <b>Yes.</b> They land in a leaf where 30% of people had heart disease, and the tree flags it.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Now 600 people</h4>
+              <p>300 test-set people with heart disease and 300 without, each taking their own path. Watch where the <span class="y">red</span> piles grow.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Leaves are verdicts</h4>
+              <p>Leaves outlined in <span class="y">red</span> flag everyone who lands in them. This tiny tree catches most sick people but raises many false alarms. A forest grows many trees on random samples and averages them; with SMOTEENN, my 50-tree forest caught <b data-bind="m.rf-smoteenn.metrics.rec" data-fmt="pct0"></b>.</p>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="xp" id="xp-knn" aria-labelledby="xp-knn-h">
+        <header class="xp-head">
+          <p class="xp-kicker">Model 3 of 5</p>
+          <h3 id="xp-knn-h">k-nearest neighbors asks the people most like you</h3>
+          <p>KNN has no formula to learn. It keeps every training answer, and to judge someone new it lets the <i>k</i> most similar people vote.</p>
+        </header>
+        <div class="xp-scrolly">
+          <div class="xp-stage">
+            <div class="xp-hud xp-vote" aria-live="polite">
+              <div><span class="lbl">k =</span> <span class="big kval">5</span></div>
+              <div class="ballot" aria-hidden="true"></div>
+              <div class="sharebar" aria-hidden="true"><span></span></div>
+              <div class="tally"></div>
+              <div class="verdict">Verdict: at risk</div>
+            </div>
+          </div>
+          <div class="xp-steps">
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>The heart is made of people</h4>
+              <p>Rebuilt from 1,500 real respondents in my training data, plus some dust for shape.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Spread them out by their answers</h4>
+              <p>Each person moves to their place in a 3D summary of the 22 answers, so people who answered alike end up close together. Colors show who had heart disease.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>The 5 closest people vote</h4>
+              <p>A patient with heart disease appears. KNN measures their distance to everyone, wraps the 5 nearest in a sphere, and goes with the majority: <b class="y">at risk</b>.</p>
+              <div class="formula">d(a, b) = √( Σ<sub>i</sub> (a<sub>i</sub> − b<sub>i</sub>)² )</div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Grow <i>k</i> and the crowd takes over</h4>
+              <p>The sphere swells to hold more neighbors. Since 91% of any crowd is healthy, the vote turns blue. Plain KNN caught only <b><span data-bind="m.knn-22.metrics.rec" data-fmt="per100"></span> of every 100</b> sick people.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Add synthetic neighbors</h4>
+              <p>SMOTEENN grows new red points on the lines between real sick neighbors and clears out confusing ones. With <i>k</i> = 25 the sphere votes red again. KNN + SMOTEENN caught <b data-bind="m.knn-smoteenn.metrics.rec" data-fmt="pct0"></b>.</p>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="xp" id="xp-boosting" aria-labelledby="xp-boosting-h">
+        <header class="xp-head">
+          <p class="xp-kicker">Model 4 of 5</p>
+          <h3 id="xp-boosting-h">AdaBoost learns from its mistakes</h3>
+          <p>A team of "stumps", each a single yes/no cut, built one at a time. Every new stump is trained to fix what the team so far gets wrong.</p>
+        </header>
+        <div class="xp-scrolly">
+          <div class="xp-stage">
+            <div class="xp-hud xp-readout"><span>round <b class="r-t">0</b></span><span>error ε <b class="r-e">—</b></span><span>say α <b class="r-a">—</b></span><span class="r-acc"></span></div>
+          </div>
+          <div class="xp-steps">
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Everyone starts equal</h4>
+              <p>100 people with heart disease and 100 without, from the training sample, on a 2D summary of their answers. Every dot has the same weight, so the same size.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Stump #1: one cut</h4>
+              <p>The best single straight cut puts most red on one side. It still gets plenty wrong; those people are ringed in white.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Mistakes get heavier</h4>
+              <p>Every misclassified person's weight goes up and every correct one's goes down. The worse the stump, the smaller its say α.</p>
+              <div class="formula">α = ½ ln((1 − ε) ⁄ ε) &nbsp;&nbsp; w<sub>i</sub> ← w<sub>i</sub> · e<sup>±α</sup></div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>The next stump chases the heavy ones</h4>
+              <p>Each new cut is pulled toward the people the team keeps getting wrong. Old cuts fade into the background, but they still count.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>The team votes</h4>
+              <p>Add every stump's vote, weighted by its say, and many straight cuts stack into a patchwork border. My notebook stacked 750 stumps: <b data-bind="m.adaboost.metrics.acc" data-fmt="pct1"></b> accurate, but without balancing it caught only <b><span data-bind="m.adaboost.metrics.rec" data-fmt="per100"></span> of every 100</b>.</p>
+              <div class="formula">F(x) = sign( Σ<sub>t</sub> α<sub>t</sub> h<sub>t</sub>(x) )</div>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="xp" id="xp-neural" aria-labelledby="xp-neural-h">
+        <header class="xp-head">
+          <p class="xp-kicker">Model 5 of 5</p>
+          <h3 id="xp-neural-h">A neural network passes signals through layers</h3>
+          <p>My actual trained network: 22 answers, squeezed to 18 numbers by PCA, then 100 hidden neurons and one output. A real patient's answers travel through it as pulses of light.</p>
+        </header>
+        <div class="xp-scrolly">
+          <div class="xp-stage">
+            <div class="xp-hud xp-patients" role="group" aria-label="Choose a patient">
+              <button class="chip" data-p="caught" aria-pressed="false">Caught</button>
+              <button class="chip" data-p="borderline" aria-pressed="true">Borderline</button>
+              <button class="chip" data-p="healthy" aria-pressed="false">Healthy</button>
+            </div>
+            <div class="xp-hud xp-readout"><span>neurons firing <b class="r-f">—</b></span><span>output <b class="r-p">—</b></span><span class="r-v"></span></div>
+          </div>
+          <div class="xp-steps">
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>22 answers go in</h4>
+              <p>Each input node is one encoded answer. Brighter means further from average for this patient.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Compress to 18 numbers</h4>
+              <p>My pipeline standardizes the answers and keeps the 18 principal components that hold 90% of the variation. Every component mixes all 22 answers.</p>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>100 hidden neurons</h4>
+              <p>Each neuron takes a weighted sum of the 18 inputs plus a bias. ReLU lets positive totals through and silences the rest, so only some neurons fire for any given person.</p>
+              <div class="formula">h<sub>j</sub> = max(0, b<sub>j</sub> + Σ<sub>i</sub> w<sub>ij</sub> x<sub>i</sub>)</div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>One output</h4>
+              <p>The output neuron is a logistic regression on the 100 hidden neurons: weigh, add, squash into a probability.</p>
+              <div class="formula">p = σ(c + Σ<sub>j</sub> v<sub>j</sub> h<sub>j</sub>)</div>
+            </div></div>
+            <div class="xp-step"><div class="xp-card">
+              <p class="k"></p>
+              <h4>Learning runs backwards</h4>
+              <p>Training compares the output with the truth and sends the error back through every connection (backpropagation), nudging all 2,001 learned weights. Mine did this after every batch of 200 people, for 31 passes over the training set. Unbalanced it caught <b><span data-bind="m.mlp-100.metrics.rec" data-fmt="per100"></span> of every 100</b>; with SMOTEENN, <b data-bind="m.mlp-80-40-smoteenn.metrics.rec" data-fmt="pct0"></b>.</p>
+            </div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 8 · Results -->
+    <section class="chapter" id="results" data-name="Results">
+      <div class="chapter-head">
+        <h2 class="reveal">How every model really did.</h2>
+      </div>
+      <div class="step" data-stop="results-leaderboard">
+        <h3>The leaderboard flips</h3>
+        <p>Sort by accuracy and "always say No" is near the top. Sort by recall or F1 and the balanced models win.</p>
+        <div class="chart-card" data-chart="leaderboard">
+          <h4>Every model, ranked</h4>
+          <p class="sub">Sort by a different metric to see the order change</p>
+        </div>
+      </div>
+      <div class="step" data-stop="results-tradeoff">
+        <h3>A little accuracy for a lot of recall</h3>
+        <p>Rebalancing cost logistic regression about <span data-bind="m.logreg-22.metrics.acc|m.logreg-smoteenn.metrics.acc" data-fmt="ptsdrop"></span> points of accuracy, and raised recall from <b data-bind="m.logreg-22.metrics.rec" data-fmt="pct0"></b> to <b data-bind="m.logreg-smoteenn.metrics.rec" data-fmt="pct0"></b>.</p>
+        <div class="chart-card" data-chart="tradeoff">
+          <h4>Logistic regression, before → after</h4>
+          <p class="sub">Same test set for every method</p>
+        </div>
+      </div>
+      <div class="step" data-stop="results-curves">
+        <h3>Ranking quality, every threshold</h3>
+        <p>ROC and precision-recall curves score how well each model <em>ranks</em> people at every possible cut-off. Logistic regression ranks best, even though its default cut-off missed almost everyone.</p>
+        <div class="chart-card" data-chart="curves">
+          <h4>Ranking quality at every cut-off</h4>
+          <p class="sub">All 22 features, no balancing</p>
+        </div>
+      </div>
+      <div class="step" data-stop="results-importance">
+        <h3>What the models leaned on</h3>
+        <p>Before rebalancing, the random forest leaned hardest on BMI. Trained on SMOTEENN data, it shifted toward age group and general health: the same signals the rate charts showed in chapter 2.</p>
+        <div class="chart-card" data-chart="importance">
+          <h4>What the random forest leaned on</h4>
+          <p class="sub">Top 10 features by importance</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · Takeaways -->
+    <section class="chapter" id="takeaways" data-name="Takeaways">
+      <div class="step plain" data-stop="takeaways">
+        <h2 class="reveal">Look at the data before trusting the score.</h2>
+        <span class="todo">Draft: rewrite in your own voice</span>
+        <p class="lede">A 91% accurate model caught 11% of sick people. Checking the class balance, choosing metrics that match the real cost of mistakes, and rebalancing only the training data turned it into a model that catches about 8 in 10.</p>
+        <p><b>Next steps:</b> gradient boosting, probability calibration, cross-validated model selection, thresholds based on the real cost of a missed case, and the newer 2022 survey.</p>
+      </div>
+    </section>
+
+    <!-- 10 · About -->
+    <section class="about" id="about" data-stop="about" data-name="About">
+      <h2>About this project</h2>
+      <span class="todo">Draft: add your bio, CS-375 context, teammates and links</span>
+      <ul>
+        <li>Data: CDC BRFSS 2020, cleaned and published on Kaggle as "Personal Key Indicators of Heart Disease" by Kamil Pytlak.</li>
+        <li>Method: Python, pandas, scikit-learn and imbalanced-learn. Seeded, stratified 75/25 split; resampling on training data only. Generated <span data-bind="meta.generated" data-fmt="date"></span>.</li>
+        <li>Site: Three.js, D3 and GSAP.</li>
+      </ul>
+      <p class="disclaimer">This is an educational machine-learning project, not a medical or diagnostic tool.</p>
+    </section>
+  </main>
+
+</body>
+</html>
